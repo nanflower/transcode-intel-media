@@ -101,8 +101,8 @@ public:
 
 private:
 
-    transcodepool *g_pCaptureDeviceVec[1];
-    decodepool *g_decodeDevice[1];
+//    transcodepool *g_pCaptureDeviceVec[1];
+//    decodepool *g_decodeDevice[1];
     void InitEncoderPar();
     DECODER_PAR_INFO    m_DecoderParInfo;
     ENCODER_PAR_INFO    m_EncoderParInfo;
@@ -123,7 +123,7 @@ private:
     CDecodingPipeline*   m_pVideoDecoder;
     bool                           m_bExitDeApplication;
     bool                           m_bStopDecoder;
-    decodepool*   m_DecodePool[7];
+//    decodepool*   m_DecodePool[7];
     pthread_mutex_t        m_DeMutex;
     pthread_cond_t          m_DeCond;
 
@@ -131,7 +131,7 @@ private:
     bool                           m_bExitApplication;
     bool                           m_bStopEncoder;
     int                             m_index;
-    transcodepool*   m_TranscodePool[7];
+//    transcodepool*   m_TranscodePool[7];
     pthread_mutex_t        m_Mutex;
     pthread_cond_t          m_Cond;
 };

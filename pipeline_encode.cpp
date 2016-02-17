@@ -27,6 +27,7 @@ Copyright(c) 2005-2014 Intel Corporation. All Rights Reserved.
 #endif
 
 FILE *fpout_v;
+FILE *fpout_v1;
 FILE *fp_yuv;
 
 static void WipeMfxBitstream(mfxBitstream* pBitstream)
@@ -75,17 +76,19 @@ mfxStatus CEncTaskPool::Init(MFXVideoSession* pmfxSession, outudppool*  pLoopLis
         MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
     }
     fpout_v = fopen("transcodeV.264","wb+");
+    fpout_v1 = fopen("transcodeV1.264", "wb+");
     fp_yuv = fopen("tempV.yuv","ab+");
 
     return MFX_ERR_NONE;
 }
 
-mfxStatus CEncTaskPool::SynchronizeFirstTask()
+mfxStatus CEncTaskPool::SynchronizeFirstTask(int index)
 {
     MSDK_CHECK_POINTER(m_pTasks, MFX_ERR_NOT_INITIALIZED);
     MSDK_CHECK_POINTER(m_pMfxSession, MFX_ERR_NOT_INITIALIZED);
 
     mfxStatus sts  = MFX_ERR_NONE;
+    m_pTasks[m_nTaskBufferStart].deviceid = index;
 
     // non-null sync point indicates that task is in execution
     if (NULL != m_pTasks[m_nTaskBufferStart].EncSyncP)
@@ -241,7 +244,10 @@ mfxStatus sTask::WriteBitstream()
     m_pSample->lDecodeTimeStamp = mfxBS.DecodeTimeStamp;
 
 //    if(m_pLoopListBuffer->fpVideo)
+    if(deviceid == 0)
         fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
+    else if(deviceid == 1)
+        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
 
     //写输出
 //    m_pLoopListBuffer->Write( m_pSample, bVIDEO);
@@ -810,7 +816,7 @@ CEncodingPipeline::CEncodingPipeline()
 
     m_pLoopListBuffer = NULL;
     m_pSample = NULL;
-    m_pVd = NULL;
+//    m_pVd = NULL;
     m_bSelfCaluBuffsizeInKB = false;
 
 //    MSDK_ZERO_MEMORY(m_ExtLAControl);
@@ -914,7 +920,7 @@ mfxStatus CEncodingPipeline::Init( sParams *pParams )
 //    sprintf( pFileName,"cctv%d.264", pParams->ndeviceid );
 //    fpVideo = fopen(pFileName, "wa+");
 
-    m_pVd = pParams->vd;
+//    m_pVd = pParams->vd;
     m_MVCflags = pParams->MVC_flags;
 
     // prepare save buffer
@@ -1101,7 +1107,7 @@ mfxStatus CEncodingPipeline::GetFreeTask(sTask **ppTask)
     sts = m_TaskPool.GetFreeTask(ppTask);
     if (MFX_ERR_NOT_FOUND == sts)
     {
-        sts = m_TaskPool.SynchronizeFirstTask();
+        sts = m_TaskPool.SynchronizeFirstTask(m_deviceid);
         MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 
         // try again
@@ -1114,7 +1120,7 @@ mfxStatus CEncodingPipeline::GetFreeTask(sTask **ppTask)
 mfxStatus CEncodingPipeline::LoadFrameFromBuffer(mfxFrameSurface1* pSurface,  unsigned long *plTimeStamp)
 {
     MSDK_CHECK_POINTER(pSurface, MFX_ERR_NULL_PTR);
-    MSDK_CHECK_POINTER(m_pVd, MFX_ERR_NULL_PTR);
+    MSDK_CHECK_POINTER(transcode_Buffer[m_deviceid], MFX_ERR_NULL_PTR);
 
     mfxU16 w, h, pitch;
     mfxU8 *ptr;
@@ -1144,14 +1150,17 @@ mfxStatus CEncodingPipeline::LoadFrameFromBuffer(mfxFrameSurface1* pSurface,  un
 
     int YLength = 0;
 
-    if( !m_pVd->GetFrame( YFrameBuf, YLength, plTimeStamp, 0 ))
+    if( !transcode_Buffer[m_deviceid]->GetFrame( YFrameBuf, YLength, plTimeStamp, 0 ))
     {
         return MFX_TASK_BUSY;
     }
+//    if( !m_pVd->GetFrame( YFrameBuf, YLength, plTimeStamp, 0 ))
+//    {
+//        return MFX_TASK_BUSY;
+//    }
 //    fwrite( YFrameBuf, h*w*3/2, 1, fp_yuv);
 
     mfxU16 i=0;
-    mfxU32 j=0;
     for(i = 0; i < h; i++)
     {
         memcpy( ptr + i*pitch, YFrameBuf+w*i, w );
@@ -1593,7 +1602,7 @@ mfxStatus CEncodingPipeline::Run()
     // synchronize all tasks that are left in task pool
     while (MFX_ERR_NONE == sts)
     {
-        sts = m_TaskPool.SynchronizeFirstTask();
+        sts = m_TaskPool.SynchronizeFirstTask(m_deviceid);
     }
 
     // MFX_ERR_NOT_FOUND is the correct status to exit the loop with

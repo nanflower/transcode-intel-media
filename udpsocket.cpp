@@ -1,8 +1,28 @@
 #include "udpsocket.h"
 
+#include "global.h"
+
 FILE *fp_write;
 FILE *fp_v;
+FILE *fp_v1;
 FILE *fp_a;
+FILE *fp_a1;
+
+pthread_mutex_t locker;
+uint8_t* q_buf;
+uint8_t* dst;
+uint8_t* src;
+int bufsize;
+volatile int write_ptr;
+volatile int read_ptr;
+
+pthread_mutex_t locker1;
+uint8_t* q_buf1;
+uint8_t* dst1;
+uint8_t* src1;
+int bufsize1;
+volatile int write_ptr1;
+volatile int read_ptr1;
 
 int write_buffer(void *opaque, uint8_t *buf, int buf_size){
     if(!feof(fp_write)){
@@ -13,10 +33,48 @@ int write_buffer(void *opaque, uint8_t *buf, int buf_size){
     }
 }
 
+int read_data(void *opaque, uint8_t *buf, int buf_size) {
+
+    udpsocket* pTemp = (udpsocket*)opaque;
+    int size = buf_size;
+    bool ret;
+    do {
+        ret = pTemp->get_queue( buf, size);
+    } while (ret);
+
+    return size;
+}
+
+int read_data1(void *opaque, uint8_t *buf, int buf_size) {
+
+    udpsocket* pTemp = (udpsocket*)opaque;
+    int size = buf_size;
+    bool ret;
+    do {
+        ret = pTemp->get_queue1( buf, size);
+    } while (ret);
+
+    return size;
+}
+
 udpsocket::udpsocket()
 {
+    pthread_mutex_init(&locker, NULL);
+    q_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024*2);
+    write_ptr = 0;
+    read_ptr = 0;
+    bufsize = 1024*1024;
+    dst = q_buf;
+    src = q_buf;
 
-    m_tsRecvPool = new tspoolqueue;
+    pthread_mutex_init(&locker1, NULL);
+    q_buf1 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024*2);
+    write_ptr1 = 0;
+    read_ptr1 = 0;
+    bufsize1 = 1024*1024;
+    dst1 = q_buf1;
+    src1 = q_buf1;
+
     fp_write=fopen("cuc60anniversary_start.h264","wb+"); //输出文件
 }
 
@@ -28,7 +86,6 @@ udpsocket::~udpsocket()
 void udpsocket::thread_init(int index)
 {
 
-    //init_buffer();
     protindex = index;
 
     pthread_t udp_recv_thread;
@@ -45,7 +102,7 @@ void udpsocket::thread_init(int index)
     pthread_detach(ts_demux_thread);
     pthread_detach(udp_recv_thread);
 
-    m_transProcess = new one_process(0);
+    m_transProcess = new one_process(protindex-1);
     m_transProcess->Init();
 }
 
@@ -68,9 +125,7 @@ void *udpsocket::ts_demuxer(void *pArg)
 
 int udpsocket::ts_demux(int index)
 {
-    AVCodec *pVideoCodec[VIDEO_NUM];
     AVCodec *pAudioCodec[AUDIO_NUM];
-    AVCodecContext *pVideoCodecCtx[VIDEO_NUM];
     AVCodecContext *pAudioCodecCtx[AUDIO_NUM];
     AVIOContext * pb;
     AVInputFormat *piFmt;
@@ -78,35 +133,24 @@ int udpsocket::ts_demux(int index)
     uint8_t *buffer;
     int videoindex[VIDEO_NUM];
     int audioindex[AUDIO_NUM];
-    AVStream *pVst[VIDEO_NUM];
     AVStream *pAst[AUDIO_NUM];
     AVFrame *pVideoframe[VIDEO_NUM];
     AVFrame *pAudioframe[AUDIO_NUM];
     AVFrame *pOutAudioframe[AUDIO_NUM];
-    AVFrame *pOutAudioframelast[AUDIO_NUM];
 
 
     AVPacket pkt;
-    int got_picture;
-    int video_num[VIDEO_NUM];
-    int audio_num[AUDIO_NUM];
     int frame_size;
 
-    //transcodepool
-    transcodepool*  pVideoTransPool[VIDEO_NUM];
-    decodepool*      pVideoDecodePool[VIDEO_NUM];
+//    decodepool*      pVideoDecodePool;
 
-    for(    int i=0; i<1; i++){
-        pVideoTransPool[i]->Init();
-        pVideoDecodePool[i]->Init(i);
-    }
+//    for(    int i=0; i<1; i++){
+//        pVideoDecodePool = new decodepool();
+//        pVideoDecodePool->Init(i);
+//    }
 
     for( int i=0; i<VIDEO_NUM; i++ ){
-        pVideoCodec[i] = NULL;
-        pVideoCodecCtx[i] =NULL;
         videoindex[i] = -1;
-        pVst[i] = NULL;
-        video_num[i] = 0;
         pVideoframe[i] = NULL;
         pVideoframe[i] = av_frame_alloc();
     }
@@ -115,11 +159,8 @@ int udpsocket::ts_demux(int index)
         pAudioCodecCtx[i] = NULL;
         audioindex[i] = -1;
         pAst[i] = NULL;
-        audio_num[i] = 0;
         pOutAudioframe[i] = NULL;
         pOutAudioframe[i] = av_frame_alloc();
-        pOutAudioframelast[i] = NULL;
-        pOutAudioframelast[i] = av_frame_alloc();
         pAudioframe[i] = NULL;
         pAudioframe[i] = av_frame_alloc();
     }
@@ -127,15 +168,7 @@ int udpsocket::ts_demux(int index)
     piFmt = NULL;
     pFmt = NULL;
     buffer = (uint8_t*)av_mallocz(sizeof(uint8_t)*BUFFER_SIZE);
-    got_picture = 0;
     frame_size = AVCODEC_MAX_AUDIO_FRAME_SIZE*3/2;
-
-    //encoder
-//    AVFormatContext *ofmt_ctx = NULL;
-//    AVPacket enc_pkt;
-//    AVStream *out_stream;
-//    AVCodecContext *enc_ctx;
-//    AVCodec *encoder;
 
     AVFormatContext *outAudioFormatCtx[AUDIO_NUM];
     AVPacket audio_pkt;
@@ -143,13 +176,17 @@ int udpsocket::ts_demux(int index)
     AVCodecContext *AudioEncodeCtx[AUDIO_NUM];
     AVCodec *AudioEncoder[AUDIO_NUM];
 
-//    fp_v = fopen("OUT.yuv","ab+"); //输出文件
-//    fp_a = fopen("audio_out.aac","wb+");
+    fp_v = fopen("test0.mpg","wb+"); //输出文件
+    fp_v1 = fopen("test1.mpg" , "wb+");
+    fp_a = fopen("audio_out.aac","wb+");
+    fp_a1 = fopen("audio1.aac","wb+");
 
     //FFMPEG
     av_register_all();
-
-    pb = avio_alloc_context(buffer, 4096, 0, NULL, read_data, NULL, NULL);
+    if(protindex == 1)
+        pb = avio_alloc_context(buffer, 4096, 0, NULL, read_data, NULL, NULL);
+    else if(protindex == 2)
+        pb = avio_alloc_context(buffer, 4096, 0, NULL, read_data1, NULL, NULL);
     printf("thread %d pid %lu tid %lu\n",index,(unsigned long)getpid(),(unsigned long)pthread_self());
 
     if (!pb) {
@@ -160,7 +197,6 @@ int udpsocket::ts_demux(int index)
     int x = av_probe_input_buffer(pb, &piFmt, "", NULL, 0, 0);
     if (x < 0) {
         printf("probe error: %d",x);
-       // fprintf(stderr, "probe failed!\n");
     } else {
         fprintf(stdout, "probe success!\n");
         fprintf(stdout, "format: %s[%s]\n", piFmt->name, piFmt->long_name);
@@ -174,10 +210,7 @@ int udpsocket::ts_demux(int index)
     } else {
         fprintf(stdout, "open stream success!\n");
     }
-    //pFmt->probesize = 4096 * 2000;
-    //pFmt->max_analyze_duration = 5 * AV_TIME_BASE;
-    //pFmt->probesize = 2048;
-   // pFmt->max_analyze_duration = 1000;
+
     pFmt->probesize = 2048 * 1000 ;
     pFmt->max_analyze_duration = 2048 * 1000;
     if (avformat_find_stream_info(pFmt,0) < 0) {
@@ -189,12 +222,12 @@ int udpsocket::ts_demux(int index)
 
     int videox = 0,audiox = 0;
     for (int i = 0; i < pFmt->nb_streams; i++) {
-        if(videox == 7 && audiox == 7)
+        if(videox == 1 && audiox == 1)
             break;
-        if ( pFmt->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && videox < 7 ) {
+        if ( pFmt->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && videox < 1 ) {
             videoindex[ videox++ ] = i;
         }
-        if ( pFmt->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && audiox < 7 ) {
+        if ( pFmt->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && audiox < 1 ) {
             audioindex[ audiox++ ] = i;
         }
     }
@@ -202,24 +235,6 @@ int udpsocket::ts_demux(int index)
     for(int i=0; i<VIDEO_NUM; i++)
         printf("videoindex %d = %d, audioindex %d = %d\n",i , videoindex[i], i ,audioindex[i]);
 
-//    if (videoindex[6] < 0 || audioindex[6] < 0) {
-//        fprintf(stderr, "videoindex=%d, audioindex=%d\n", videoindex[6], audioindex[6]);
-//        return -1;
-//    }
-
-    for( int i=0; i<VIDEO_NUM; i++ ){
-        pVst[i] = pFmt->streams[videoindex[i]];
-        pVideoCodecCtx[i] = pVst[i]->codec;
-        pVideoCodec[i] = avcodec_find_decoder(pVideoCodecCtx[i]->codec_id);
-        if (!pVideoCodec[i]) {
-            fprintf(stderr, "could not find video decoder!\n");
-            return -1;
-        }
-        if (avcodec_open2(pVideoCodecCtx[i], pVideoCodec[i], NULL) < 0) {
-            fprintf(stderr, "could not open video codec!\n");
-            return -1;
-        }
-    }
 
     for( int i=0; i<AUDIO_NUM; i++ ){
         pAst[i] = pFmt->streams[audioindex[i]];
@@ -236,55 +251,10 @@ int udpsocket::ts_demux(int index)
     }
     unsigned char* outbuffer = NULL;
     outbuffer = (unsigned char*)av_malloc(1024*1000);
-    //video encoder init
-//    avformat_alloc_output_context2(&ofmt_ctx, NULL, "h264", NULL);
-//    AVIOContext *avio_out = NULL;
-//    avio_out = avio_alloc_context(outbuffer, 1024*1000, 0, NULL, NULL, write_buffer,NULL);
-//    if(avio_out == NULL){
-//        printf("avio_out error\n");
-//        return -1;
-//    }
-//    ofmt_ctx->pb = avio_out;
-//    ofmt_ctx->flags = AVFMT_FLAG_CUSTOM_IO;
-//    out_stream = avformat_new_stream(ofmt_ctx, NULL);
-//    if(!out_stream){
-//        av_log(NULL, AV_LOG_ERROR, "Failed allocating output stream\n");
-//        return -1;
-//    }
-//    enc_ctx = out_stream->codec;
-//    encoder = avcodec_find_encoder(AV_CODEC_ID_H264);
-//    enc_ctx->height = pVideoCodecCtx[0]->height;
-//    enc_ctx->width = pVideoCodecCtx[0]->width;
-//    enc_ctx->sample_aspect_ratio = pVideoCodecCtx[0]->sample_aspect_ratio;
-//    enc_ctx->pix_fmt = encoder->pix_fmts[0];
-//    out_stream->time_base = pVst[0]->time_base;
-////    out_stream->time_base.num = 1;
-////    out_stream->time_base.den = 25;
-//    enc_ctx->me_range = 16;
-//    enc_ctx->max_qdiff = 4;
-//    enc_ctx->qmin = 25;
-//    enc_ctx->qmax = 40;
-//    enc_ctx->qcompress = 0.6;
-//    enc_ctx->refs = 3;
-//    enc_ctx->bit_rate = 1000000;
-//    int re = avcodec_open2(enc_ctx, encoder, NULL);
-//    if (re < 0) {
-//        av_log(NULL, AV_LOG_ERROR, "Cannot open video encoder for stream \n");
-//        return re;
-//    }
-
-//    if(ofmt_ctx->oformat->flags & AVFMT_GLOBALHEADER)
-//        enc_ctx->flags |= CODEC_FLAG_GLOBAL_HEADER;
-//    re = avformat_write_header(ofmt_ctx, NULL);
-//    if(re < 0){
-//        av_log(NULL, AV_LOG_ERROR, "Error occured when opening output file\n");
-//        return re;
-//    }
 
     //audio encoder
     for( int i=0; i<AUDIO_NUM; i++){
         outAudioFormatCtx[i] = NULL;
-//        audio_pkt = NULL;
         audio_stream[i] = NULL;
         AudioEncodeCtx[i] = NULL;
         AudioEncoder[i] = NULL;
@@ -381,43 +351,11 @@ int udpsocket::ts_demux(int index)
         if (av_read_frame(pFmt, &pkt) >= 0) {
             for( int i=0; i<1; i++ ){
                 if (pkt.stream_index == videoindex[i]) {
-//                    fwrite(pkt.data,pkt.size, 1, fp_v);
-                    pVideoDecodePool[i]->putbuffer(&pkt, i);
-//                    av_frame_free(&pframe);
-//                    avcodec_decode_video2(pVideoCodecCtx[i], pVideoframe[i], &got_picture, &pkt);
-//                    if (got_picture) {
-//                        if(i == 0){
-//                            pVideoframe[i]->pts = av_frame_get_best_effort_timestamp(pVideoframe[i]);
-//                            pVideoframe[i]->pict_type = AV_PICTURE_TYPE_NONE;
-
-////                            printf("pkt .size = %d , frame.size = %d, width = %d, height = %d\n", pkt.size, pVideoframe[i]->linesize[0], pVideoframe[i]->width, pVideoframe[i]->height);
-////                            printf("pVideoframe->Y = %d, pVideoframe->WIDTH = %d\n", pVideoframe[i]->linesize[0], pVideoframe[i]->width);
-////                            for(int j=0; j<pVideoframe[i]->height; j++)
-////                                fwrite( pVideoframe[i]->data[0]  +  pVideoframe[i]->linesize[0]*j, pVideoframe[i]->width, 1, fp_v);
-////                            for(int k=0; k<pVideoframe[i]->height/2; k++)
-////                                fwrite( pVideoframe[i]->data[1] + pVideoframe[i]->linesize[1]*k, pVideoframe[i]->width/2, 1, fp_v);
-////                            for(int l=0; l<pVideoframe[i]->height/2; l++)
-////                                fwrite( pVideoframe[i]->data[2] + pVideoframe[i]->linesize[2]*l, pVideoframe[i]->width/2, 1, fp_v);
-////                            m_tsRecvPool->write_buffer(pkt.data, pkt.size);
-
-////                            printf("videoframesize0 = %d, size1 = %d, size2 = %d, size3 = %d, size4 = %d,format = %d\n",pVideoframe[i]->linesize[0],
-////                                    pVideoframe[i]->linesize[1],pVideoframe[i]->linesize[2],pVideoframe[i]->linesize[3],pVideoframe[i]->linesize[4],pVideoframe[i]->format);
-//                            pVideoTransPool[i]->PutFrame( pVideoframe[i] ,i);
-
-//                            /*  ffmpeg encoder */
-////                            enc_pkt.data = NULL;
-////                            enc_pkt.size = 0;
-////                            av_init_packet(&enc_pkt);
-////                            re = avcodec_encode_video2(ofmt_ctx->streams[videoindex[i]]->codec, &enc_pkt,
-////                                    pVideoframe[i], &got_picture);
-////                            printf("enc_got_frame =%d, re = %d \n",enc_got_frame, re);
-////                            printf("Encode 1 Packet\tsize:%d\tpts:%lld\n",enc_pkt.size,enc_pkt.pts);
-//                            /* prepare packet for muxing */
-////                            fwrite(enc_pkt.data,enc_pkt.size, 1, fp_v);
-//                        }
-////                        printf("index = %d video %d decode %d num\n", index, i, video_num[i]++);
-//                        break;
-//                    }
+//                    if(protindex == 1)
+//                        fwrite(pkt.data,pkt.size, 1, fp_v);
+//                    else
+//                        fwrite(pkt.data,pkt.size, 1, fp_v1);
+                    decode_Buffer[protindex-1]->putbuffer(&pkt, i);
 
                  }else if (pkt.stream_index == audioindex[i]) {
                     if (avcodec_decode_audio4(pAudioCodecCtx[i], pAudioframe[i], &frame_size, &pkt) >= 0) {
@@ -434,12 +372,6 @@ int udpsocket::ts_demux(int index)
                             av_audio_fifo_write(af[i], (void **)&converted_input_samples, pAudioframe[i]->nb_samples);
 
                             int got_frame=0;
-                            //Encode
-//                            av_init_packet(&audio_pkt);
-//                            audio_pkt.data = NULL;
-//                            audio_pkt.size = 0;
-//                            avcodec_encode_audio2(AudioEncodeCtx[0], &audio_pkt, pOutAudioframe[i], &got_frame);
-//                            printf("Encode 1 Packet\tsize:%d\tpts:%lld\n", audio_pkt.size, audio_pkt.pts);
                             while(av_audio_fifo_size(af[i]) >= AudioEncodeCtx[i]->frame_size){
                                 int frame_size = FFMIN(av_audio_fifo_size(af[i]),AudioEncodeCtx[i]->frame_size);
                                 pOutAudioframe[i]->nb_samples =  frame_size;
@@ -458,19 +390,17 @@ int udpsocket::ts_demux(int index)
                                 av_init_packet(&audio_pkt);
                                 avcodec_encode_audio2(AudioEncodeCtx[i], &audio_pkt, pOutAudioframe[i], &got_frame);
                                 printf("Encode 1 Packet\tsize:%d\tpts:%lld\n", audio_pkt.size, audio_pkt.pts);
-//                                fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a);
+                                if(protindex == 1)
+                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a);
+                                else if(protindex == 2)
+                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a1);
                             }
                         }
-//                        if(i == 0){
-//                            fwrite(pkt.data,pkt.size, 1, fp_a);
-//                        }
-//                        printf("index = %d audio %d decode %d num\n", index, i, audio_num[i]++);
                         break;
                     }
                 }
             }
             av_free_packet(&pkt);
-//            av_free_packet(&enc_pkt);
         }
     }
 
@@ -487,7 +417,6 @@ int udpsocket::ts_demux(int index)
 
 void udpsocket::udp_ts_recv(void)
 {
-//    printf("thread 1 pid %lu tid %lu\n",(unsigned long)getpid(),(unsigned long)pthread_self());
     /* 创建UDP套接口 */
     struct sockaddr_in server_addr;
     bzero(&server_addr, sizeof(server_addr));
@@ -540,10 +469,10 @@ void udpsocket::udp_ts_recv(void)
              {
                  printf("received data error!\n");
              }
-           // printf("receive length = %d\n",len);
-             m_tsRecvPool->put_queue( buffer, len);
-       //      else
-      //       printf("socket %d work\n", multiindex);
+             if(protindex == 1)
+                put_queue( buffer, len);
+             else if(protindex == 2)
+                 put_queue1( buffer , len);
          }
          else
          {
@@ -559,20 +488,104 @@ void udpsocket::udp_ts_recv(void)
 }
 
 
-int udpsocket::read_data(void *opaque, uint8_t *buf, int buf_size) {
-//	UdpParam udphead;
- //   tspoolqueue* pTemp = new tspoolqueue;
-    tspoolqueue* pTemp = (tspoolqueue*)opaque;
+//int udpsocket::read_data(void *opaque, uint8_t *buf, int buf_size) {
 
+//    udpsocket* pTemp = (udpsocket*)opaque;
+//    int size = buf_size;
+//    bool ret;
+//    do {
+//        ret = pTemp->get_queue( buf, size);
+//    } while (ret);
 
-    int size = buf_size;
-    bool ret;
-   // printf("read data %d\n", buf_size);
-    do {
-        ret = pTemp->get_queue( buf, size);
-     //   ret = m_tsRecvPool->GetTsPacket(buf);
-    } while (ret);
+//    return size;
+//}
 
-  //  printf("read data Ok %d\n", buf_size);
-    return size;
+void udpsocket::put_queue(unsigned char* buf, int size) {
+    pthread_mutex_lock(&locker);
+    dst = q_buf + write_ptr;
+    if ((write_ptr + size) > bufsize) {
+        memcpy(dst, buf, (bufsize - write_ptr));
+        memcpy(q_buf, buf+(bufsize - write_ptr), size-(bufsize - write_ptr));
+    } else {
+        memcpy(dst, buf, size*sizeof(uint8_t));
+    }
+    write_ptr = (write_ptr + size) % bufsize;
+    pthread_mutex_unlock(&locker);
+}
+
+int udpsocket::get_queue(uint8_t* buf, int size) {
+    pthread_mutex_lock(&locker);
+    src = q_buf + read_ptr;
+    int wrap = 0;
+
+    int pos = write_ptr;
+
+    if (pos < read_ptr) {
+        pos += bufsize;
+        if(size + read_ptr > bufsize)
+            wrap = 1;
+    }
+
+    if ( (read_ptr + size) > pos) {
+        pthread_mutex_unlock(&locker);
+        return 1;
+    }
+
+    if (wrap) {
+        fprintf(stdout, "wrap...\n");
+        memcpy(buf, src, (bufsize - read_ptr));
+        src = q_buf + 0;
+        memcpy(buf+(bufsize - read_ptr), src, size-(bufsize - read_ptr));
+    } else {
+        memcpy(buf, src, sizeof(uint8_t)*size);
+    }
+    read_ptr = (read_ptr + size) % bufsize;
+    pthread_mutex_unlock(&locker);
+
+    return 0;
+}
+
+void udpsocket::put_queue1(unsigned char* buf, int size) {
+    pthread_mutex_lock(&locker1);
+    dst1 = q_buf1 + write_ptr1;
+    if ((write_ptr1 + size) > bufsize1) {
+        memcpy(dst1, buf, (bufsize1 - write_ptr1));
+        memcpy(q_buf1, buf+(bufsize1 - write_ptr1), size-(bufsize1 - write_ptr1));
+    } else {
+        memcpy(dst1, buf, size*sizeof(uint8_t));
+    }
+    write_ptr1 = (write_ptr1 + size) % bufsize1;
+    pthread_mutex_unlock(&locker1);
+}
+
+int udpsocket::get_queue1(uint8_t* buf, int size) {
+    pthread_mutex_lock(&locker1);
+    src1 = q_buf1 + read_ptr1;
+    int wrap = 0;
+
+    int pos = write_ptr1;
+
+    if (pos < read_ptr1) {
+        pos += bufsize;
+        if(size + read_ptr1 > bufsize)
+            wrap = 1;
+    }
+
+    if ( (read_ptr1 + size) > pos) {
+        pthread_mutex_unlock(&locker1);
+        return 1;
+    }
+
+    if (wrap) {
+        fprintf(stdout, "wrap...\n");
+        memcpy(buf, src1, (bufsize - read_ptr1));
+        src1 = q_buf1 + 0;
+        memcpy(buf+(bufsize1 - read_ptr1), src1, size-(bufsize1 - read_ptr1));
+    } else {
+        memcpy(buf, src1, sizeof(uint8_t)*size);
+    }
+    read_ptr1 = (read_ptr1 + size) % bufsize1;
+    pthread_mutex_unlock(&locker1);
+
+    return 0;
 }

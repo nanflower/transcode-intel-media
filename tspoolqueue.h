@@ -32,19 +32,18 @@ public:
     tspoolqueue();
     ~tspoolqueue();
     void init(void);
-    void init_buffer(void);
     void init_queue( int size);
     void free_queue();
     void put_queue(unsigned char* buf, int size);
     int get_queue(uint8_t* buf, int size);
 
-    void put_queue1(unsigned char* buf, int size);
-    int get_queue1(uint8_t* buf, int size);
-
     //decode
     void write_buffer(uint8_t* buf, int size);
     int get_buffer(uint8_t* buf,int size);
-
+private:
+    pthread_mutex_t locker;
+//    volatile int write_ptr;
+//    volatile int read_ptr;
 //    pthread_mutex_t locker;
 //    pthread_cond_t cond;
 //    uint8_t* q_buf;

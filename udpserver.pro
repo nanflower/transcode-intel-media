@@ -26,7 +26,6 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     udp.cpp \
     udpsocket.cpp \
-    tspoolqueue.cpp \
     transcodepool.cpp \
     audio_encode.cpp \
     pipeline_encode.cpp \
@@ -50,7 +49,6 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     udp.h \
     udpsocket.h \
-    tspoolqueue.h \
     transcodepool.h \
     audio_encode.h \
     pipeline_encode.h \

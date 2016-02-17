@@ -4,12 +4,16 @@
 #include "transcodepool.h"
 #include "one_process.h"
 #include "outudppool.h"
+#include "decodepool.h"
+#include "transcodepool.h"
 //#include "Udptrans.h"
 #include "values.h"
 #include <QFont>
 
 extern transcodepool *g_pCaptureDeviceVec[DEVICE_NUM];
 extern outudppool *g_pLoopListBuffer[16];
+extern decodepool *decode_Buffer[2];
+extern transcodepool *transcode_Buffer[2];
 //extern CUDPTrans *g_pUDPServer;
 
 

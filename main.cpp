@@ -2,8 +2,12 @@
 #include <QApplication>
 
 #include "outudppool.h"
+#include "decodepool.h"
+#include "transcodepool.h"
 
 outudppool *g_pLoopListBuffer[16] = {0};
+decodepool *decode_Buffer[2] = {0};
+transcodepool *transcode_Buffer[2] = {0};
 
 int main(int argc, char *argv[])
 {

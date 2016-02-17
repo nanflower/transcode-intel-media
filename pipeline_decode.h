@@ -66,8 +66,8 @@ struct sInputParams
 {
     int decodeID;
 
-    decodepool* decode;
-    transcodepool* transcode;
+//    decodepool* decode;
+//    transcodepool* transcode;
     mfxU32 videoType;
     eWorkMode mode;
     MemType memType;
@@ -198,8 +198,8 @@ protected: // variables
 //    CSmplYUVWriter          m_FileWriter;
 //    std::auto_ptr<CSmplBitstreamReader>  m_FileReader;
 
-    decodepool* m_InputReader;
-    transcodepool* m_OutputWriter;
+//    decodepool* m_InputReader;
+//    transcodepool* m_OutputWriter;
 
     mfxBitstream            m_mfxBS; // contains encoded data
 

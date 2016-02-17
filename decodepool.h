@@ -33,6 +33,12 @@ public:
     bool putbuffer( AVPacket *pVideoPacket, int index);
 
 private:
+    pthread_mutex_t lockdecode;
+    uint8_t* decode_buffer;
+    int decode_bufsize;
+    volatile int dewrite_ptr;
+    volatile int deread_ptr;
+    unsigned long DeTimeStamp;
 //    pthread_mutex_t lockdecode;
 //    uint8_t* decode_buffer;
 //    int decode_bufsize;

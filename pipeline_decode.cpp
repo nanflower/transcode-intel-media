@@ -10,6 +10,7 @@ Copyright(c) 2005-2015 Intel Corporation. All Rights Reserved.
 
 //#include "mfx_samples_config.h"
 #include "sample_defs.h"
+#include "global.h"
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <tchar.h>
@@ -141,7 +142,7 @@ CDecodingPipeline::CDecodingPipeline()
     fp_decode = fopen("decode.mpg","wb+"); //输出文件
 
     m_deviceid = 0;
-    m_InputReader = NULL;
+//    m_InputReader = NULL;
 
     MSDK_ZERO_MEMORY(m_mfxBS);
 
@@ -207,8 +208,8 @@ mfxStatus CDecodingPipeline::Init(sInputParams *pParams)
     m_memType = pParams->memType;
     m_nMaxFps = pParams->nMaxFPS;
     m_nFrames = pParams->nFrames ? pParams->nFrames : MFX_INFINITE;
-    m_InputReader = pParams->decode;
-    m_OutputWriter = pParams->transcode;
+//    m_InputReader = pParams->decode;
+//    m_OutputWriter = pParams->transcode;
 
 
 //    m_InputReader->Init(0);
@@ -1135,7 +1136,8 @@ mfxStatus CDecodingPipeline::DeliverOutput(mfxFrameSurface1* frame)
             res = m_pMFXAllocator->Lock(m_pMFXAllocator->pthis, frame->Data.MemId, &(frame->Data));
             if (MFX_ERR_NONE == res) {
 //                res = m_FileWriter.WriteNextFrame(frame);
-                m_OutputWriter->PutFrame(frame);
+//                m_OutputWriter->PutFrame(frame);
+                transcode_Buffer[m_deviceid]->PutFrame(frame);
 //                fwrite(frame->Data, frame->Info.BufferSize)
                 sts = m_pMFXAllocator->Unlock(m_pMFXAllocator->pthis, frame->Data.MemId, &(frame->Data));
             }
@@ -1151,7 +1153,8 @@ mfxStatus CDecodingPipeline::DeliverOutput(mfxFrameSurface1* frame)
         }
     }
     else {
-        m_OutputWriter->PutFrame(frame);
+//        m_OutputWriter->PutFrame(frame);
+        transcode_Buffer[m_deviceid]->PutFrame(frame);
 //        res = m_FileWriter.WriteNextFrame(frame);
     }
 
@@ -1285,7 +1288,7 @@ mfxStatus CDecodingPipeline::SyncOutputSurface(mfxU32 wait)
 }
 mfxStatus CDecodingPipeline::ReadFrameFromBuffer(mfxBitstream* pBS)
 {
-    MSDK_CHECK_POINTER(m_InputReader, MFX_ERR_NULL_PTR);
+    MSDK_CHECK_POINTER(decode_Buffer[m_deviceid], MFX_ERR_NULL_PTR);
     int DataLength=0;
     uint8_t* pData;
     unsigned long TimeStamp = 0;
@@ -1296,10 +1299,9 @@ mfxStatus CDecodingPipeline::ReadFrameFromBuffer(mfxBitstream* pBS)
 //    {
 //    while (1) {
         int LastLength = pBS->MaxLength - pBS->DataLength;
-        if( !m_InputReader->getbuffer(pData, LastLength, &DataLength, &TimeStamp, 0) )
+        if( !decode_Buffer[m_deviceid]->getbuffer(pData, LastLength, &DataLength, &TimeStamp, 0) )
         {
             return MFX_TASK_BUSY;
-
         }
 
         memcpy( pBS->Data + pBS->DataLength, pData, DataLength);

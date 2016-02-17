@@ -32,14 +32,6 @@ extern "C"
 
 typedef unsigned char BYTE;
 
-//typedef struct tagSample
-//{
-//    unsigned long   lSampleLength;
-//    unsigned long   lTimeStamp;
-//    long   lDecodeTimeStamp;
-//    BYTE  abySample[1];
-//}SAMPLE, *PSAMPLE;
-
 class transcodepool
 {
 public:
@@ -49,14 +41,14 @@ public:
     bool GetFrame( uint8_t *YFrameBuf,  int DataLength, unsigned long * plTimeStamp, int i);
     bool PutFrame( mfxFrameSurface1 *pSurface);
     bool PutFrame( AVFrame *pVideoframe , int index);
+
 private:
-//    pthread_mutex_t lockerx;
-////    pthread_cond_t ycond[PIN_NUM];
-//    uint8_t* yQueue_buf[PIN_NUM];
-//    int ybufsize[PIN_NUM];
-//    volatile int ywrite_ptr[PIN_NUM];
-//    volatile int yread_ptr[PIN_NUM];
-//    unsigned long long TimeStamp;
+    pthread_mutex_t lockerx;
+    uint8_t* yQueue_buf;
+    int ybufsize;
+    volatile int ywrite_ptr;
+    volatile int yread_ptr;
+    unsigned long TimeStamp;
 };
 
 #endif // TRANSCODEPOOL_H

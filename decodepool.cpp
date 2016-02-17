@@ -1,10 +1,5 @@
 #include "decodepool.h"
-pthread_mutex_t lockdecode;
-uint8_t* decode_buffer;
-int decode_bufsize;
-volatile int dewrite_ptr;
-volatile int deread_ptr;
-unsigned long DeTimeStamp;
+
 
 decodepool::decodepool()
 {
@@ -22,7 +17,7 @@ decodepool::~decodepool()
 void decodepool::Init(int index)
 {
     index = 0;
-    for(int i=0; i<PIN_NUM; i++){
+    for(int i=0; i<1; i++){
         decode_buffer = (uint8_t*)av_mallocz(sizeof(uint8_t)*100000*2);
         deread_ptr = 0;
         dewrite_ptr = 0;
@@ -37,13 +32,10 @@ void decodepool::Init(int index)
 
 bool decodepool::getbuffer(uint8_t *pData, int LastLength, int *DataLength,unsigned long *plTimeStamp, int index)
 {
-    index = 0;
 
-//printf("write = %d, read = %d\n", dewrite_ptr, deread_ptr);
     while(1)
     {
          if( dewrite_ptr > deread_ptr  || ( (dewrite_ptr+50000) < deread_ptr) ){
-//             printf(" get write = %d, read = %d\n", dewrite_ptr, deread_ptr);
              break;
          }
     }
@@ -96,15 +88,6 @@ bool decodepool::getbuffer(uint8_t *pData, int LastLength, int *DataLength,unsig
 
 bool decodepool::putbuffer(AVPacket *pVideoPacket, int index)
 {
-
-    index = 0;
-//    while(1)
-//    {
-//        if(dewrite_ptr == deread_ptr){
-//            printf("write = %d, read = %d, size = %d\n", dewrite_ptr, deread_ptr, pVideoPacket->size);
-//            break;
-//        }
-//    }
 
     pthread_mutex_lock(&lockdecode);
 

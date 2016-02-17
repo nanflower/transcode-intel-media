@@ -62,7 +62,7 @@ struct sParams
     mfxU16 nQPB;
     mfxU16 nNumSlice;
     //Capture
-    transcodepool* vd;
+//    transcodepool* vd;
 //    struct capturebuffer* vbbuffer;
     mfxU16 nCodecLevel;
     mfxU16 nCodecProfile;
@@ -75,6 +75,7 @@ struct sParams
 
 struct sTask
 {
+    int deviceid;
     mfxBitstream mfxBS;
     mfxSyncPoint EncSyncP;
     std::list<mfxSyncPoint> DependentVppTasks;
@@ -98,7 +99,7 @@ public:
     virtual mfxStatus Init(MFXVideoSession* pmfxSession, outudppool*  pLoopListBuffer,
                            mfxU32 nPoolSize, mfxU32 nBufferSize, PSAMPLE pSample);
     virtual mfxStatus GetFreeTask(sTask **ppTask);
-    virtual mfxStatus SynchronizeFirstTask();
+    virtual mfxStatus SynchronizeFirstTask(int index);
     virtual void Close();
 
 protected:
@@ -174,7 +175,7 @@ protected:
     std::vector<mfxExtBuffer*> m_EncExtParams;
 
     CHWDevice *m_pHwDev;
-    transcodepool* m_pVd;
+//    transcodepool* m_pVd;
     bool              m_bSelfCaluBuffsizeInKB;
     bool               m_bExitApplication;
     bool               m_bStopEncoder;
