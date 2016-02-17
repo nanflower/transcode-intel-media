@@ -59,6 +59,8 @@ int read_data1(void *opaque, uint8_t *buf, int buf_size) {
 
 udpsocket::udpsocket()
 {
+    bitratebefore = 0;
+
     pthread_mutex_init(&locker, NULL);
     q_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024*2);
     write_ptr = 0;
@@ -389,7 +391,7 @@ int udpsocket::ts_demux(int index)
                                 audio_pkt.size = 0;
                                 av_init_packet(&audio_pkt);
                                 avcodec_encode_audio2(AudioEncodeCtx[i], &audio_pkt, pOutAudioframe[i], &got_frame);
-                                printf("Encode 1 Packet\tsize:%d\tpts:%lld\n", audio_pkt.size, audio_pkt.pts);
+                                printf("Encode %d Packet\tsize:%d\tpts:%lld\n", protindex, audio_pkt.size, audio_pkt.pts);
                                 if(protindex == 1)
                                     fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a);
                                 else if(protindex == 2)
@@ -588,4 +590,22 @@ int udpsocket::get_queue1(uint8_t* buf, int size) {
     pthread_mutex_unlock(&locker1);
 
     return 0;
+}
+
+long long udpsocket::GetBitRate()
+{
+    long long bitrate =  m_transProcess->GetBitRate() - bitratebefore;
+    bitratebefore = m_transProcess->GetBitRate();
+
+    return bitrate;
+}
+
+long long udpsocket::GetFrameNum()
+{
+    return m_transProcess->GetFrameNum();
+}
+
+void udpsocket::SetQP(int QP)
+{
+    m_transProcess->SetQP(QP);
 }

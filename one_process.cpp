@@ -372,3 +372,18 @@ void one_process::DestroyVideoEncoder()
     }
 }
 
+long long one_process::GetBitRate()
+{
+    return m_pVideoEncoder->GetBitRate();
+}
+
+long long one_process::GetFrameNum()
+{
+    return m_pVideoEncoder->GetFrameNum();
+}
+
+void one_process::SetQP(int QP)
+{
+    m_pVideoEncoder->SetQP(QP);
+}
+

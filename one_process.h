@@ -97,6 +97,9 @@ public:
     void run_video_encoder(void);
     static void* udp_send(void *param);
     void run_udp_send(void);
+    long long GetBitRate(void);
+    long long GetFrameNum(void);
+    void SetQP(int QP);
 
 
 private:

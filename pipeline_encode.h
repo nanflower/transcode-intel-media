@@ -126,7 +126,9 @@ public:
     bool GetBuffer( PSAMPLE pSample );
     int GetSampleCount();
     bool GetTimeStamp(unsigned long &lTimeStamp);
-    int GetBitRate();
+    long long GetBitRate();
+    long long GetFrameNum();
+    void SetQP(int QP);
     void ClearVideoBuffer();
     void Quit();
     void StopEncoder( bool bStop );
@@ -181,6 +183,8 @@ protected:
     bool               m_bStopEncoder;
 
 private:
+    int perQP;
+    long long BitrateBefore;
     virtual mfxStatus InitMfxEncParams(sParams *pParams);
     virtual mfxStatus InitMfxVppParams(sParams *pParams);
     virtual mfxStatus InitSaveBuffer( int nW, int nH );

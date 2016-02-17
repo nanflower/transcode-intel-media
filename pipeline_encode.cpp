@@ -596,7 +596,7 @@ bool CEncodingPipeline::GetTimeStamp(unsigned long &lTimeStamp)
     return bRet;
 }
 
-int CEncodingPipeline::GetBitRate()
+long long CEncodingPipeline::GetBitRate()
 {
     if( NULL == m_pMfxENC )
         return 0;
@@ -606,9 +606,31 @@ int CEncodingPipeline::GetBitRate()
     if( MFX_ERR_NONE == sts )
     {
         if( mfxStat.NumFrame )
-            return (mfxStat.NumBit/mfxStat.NumFrame*m_MfxEncParams.mfx.FrameInfo.FrameRateExtN)/1000;
+            return mfxStat.NumBit;
+//        BitrateBefore = mfxStat.NumBit;
+//            return (mfxStat.NumBit/mfxStat.NumFrame*m_MfxEncParams.mfx.FrameInfo.FrameRateExtN)/1000;
     }
     return 0;
+}
+
+long long CEncodingPipeline::GetFrameNum()
+{
+    if( NULL == m_pMfxENC )
+        return 0;
+
+    mfxEncodeStat mfxStat;
+    mfxStatus sts =  m_pMfxENC->GetEncodeStat( &mfxStat );
+    if( MFX_ERR_NONE == sts )
+    {
+        if( mfxStat.NumFrame )
+            return mfxStat.NumFrame;
+    }
+    return 0;
+}
+
+void CEncodingPipeline::SetQP(int QP)
+{
+    perQP = QP;
 }
 
 void CEncodingPipeline::ClearVideoBuffer()
@@ -802,6 +824,8 @@ void CEncodingPipeline::DeleteAllocator()
 
 CEncodingPipeline::CEncodingPipeline()
 {
+    perQP = 25;
+    BitrateBefore = 0;
     memset(&m_EncodeCtrl, 0, sizeof(mfxEncodeCtrl));
     m_pMfxENC = NULL;
     m_pMfxVPP = NULL;
@@ -1334,7 +1358,7 @@ mfxU32 CEncodingPipeline::GetNumber(mfxSession session)
 
 mfxStatus CEncodingPipeline::Run()
 {
-    m_EncodeCtrl.QP = 25;
+
     MSDK_CHECK_POINTER(m_pMfxENC, MFX_ERR_NOT_INITIALIZED);
 
     mfxStatus sts = MFX_ERR_NONE;
@@ -1458,6 +1482,7 @@ mfxStatus CEncodingPipeline::Run()
             VppSyncPoint = NULL;
         }
 
+        m_EncodeCtrl.QP = perQP;
         for (;;)
         {
             // at this point surface for encoder contains either a frame from file or a frame processed by vpp
@@ -1522,6 +1547,7 @@ mfxStatus CEncodingPipeline::Run()
                 VppSyncPoint = NULL;
             }
 
+            m_EncodeCtrl.QP = perQP;
             for (;;)
             {
                 sts = m_pMfxENC->EncodeFrameAsync(&m_EncodeCtrl, &m_pEncSurfaces[nEncSurfIdx], &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
@@ -1563,7 +1589,7 @@ mfxStatus CEncodingPipeline::Run()
         // get a free task (bit stream and sync point for encoder)
         sts = GetFreeTask(&pCurrentTask);
         MSDK_BREAK_ON_ERROR(sts);
-
+        m_EncodeCtrl.QP = perQP;
         for (;;)
         {
             sts = m_pMfxENC->EncodeFrameAsync(&m_EncodeCtrl, NULL, &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);

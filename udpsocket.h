@@ -84,9 +84,12 @@ public:
     int get_queue1(uint8_t* buf, int size);
 
     long long GetBitRate();
+    long long GetFrameNum();
+    void SetQP(int QP);
 
 private:
     int protindex;
+    long long bitratebefore;
 
 };
 
