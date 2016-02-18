@@ -6,8 +6,8 @@
 #include "transcodepool.h"
 
 outudppool *g_pLoopListBuffer[16] = {0};
-decodepool *decode_Buffer[2] = {0};
-transcodepool *transcode_Buffer[2] = {0};
+decodepool *decode_Buffer[7] = {0};
+transcodepool *transcode_Buffer[7] = {0};
 
 int main(int argc, char *argv[])
 {

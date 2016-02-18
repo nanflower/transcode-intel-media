@@ -9,20 +9,16 @@ transcodepool::transcodepool()
 
 transcodepool::~transcodepool()
 {
-    for(int i=0; i<PIN_NUM; i++){
-        av_free(yQueue_buf);
-    }
+    av_free(yQueue_buf);
     pthread_mutex_destroy(&lockerx);
 }
 
 void transcodepool::Init()
 {
-    for(int i=0; i<1; i++){
-        yQueue_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*720*576*6);
-        yread_ptr = 0;
-        ywrite_ptr = 0;
-        ybufsize = 720*576*6;
-    }
+    yQueue_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*720*576*6);
+    yread_ptr = 0;
+    ywrite_ptr = 0;
+    ybufsize = 720*576*6;
 
     fp_temp = fopen("temp.yuv","wb+");
     pthread_mutex_init(&lockerx, NULL);
@@ -42,7 +38,7 @@ bool transcodepool::GetFrame( uint8_t *YFrameBuf, int DataLength, unsigned long 
             break;
         }
     }
-    printf("out write = %d, out read = %d, pts =%lld \n",ywrite_ptr, yread_ptr, TimeStamp);
+//    printf("out write = %d, out read = %d, pts =%lld \n",ywrite_ptr, yread_ptr, TimeStamp);
 
     pthread_mutex_lock(&lockerx);
 

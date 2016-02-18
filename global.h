@@ -12,8 +12,8 @@
 
 extern transcodepool *g_pCaptureDeviceVec[DEVICE_NUM];
 extern outudppool *g_pLoopListBuffer[16];
-extern decodepool *decode_Buffer[2];
-extern transcodepool *transcode_Buffer[2];
+extern decodepool *decode_Buffer[7];
+extern transcodepool *transcode_Buffer[7];
 //extern CUDPTrans *g_pUDPServer;
 
 

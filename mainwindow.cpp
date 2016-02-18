@@ -14,11 +14,11 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         if(i < 16)
         {
-            g_pLoopListBuffer[i] = new outudppool(5*188);
+            g_pLoopListBuffer[i] = new outudppool(1);
             g_pLoopListBuffer[i]->m_LoopIndex = i;//2*i+1;
         }
     }
-    for(int i=0; i<2; i++){
+    for(int i=0; i<7; i++){
         decode_Buffer[i] = new decodepool();
         decode_Buffer[i]->Init(i);
         transcode_Buffer[i] = new transcodepool();

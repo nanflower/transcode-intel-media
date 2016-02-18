@@ -82,6 +82,16 @@ public:
     int get_queue(uint8_t* buf, int size);
     void put_queue1(unsigned char* buf, int size);
     int get_queue1(uint8_t* buf, int size);
+    void put_queue2(unsigned char* buf, int size);
+    int get_queue2(uint8_t* buf, int size);
+    void put_queue3(unsigned char* buf, int size);
+    int get_queue3(uint8_t* buf, int size);
+    void put_queue4(unsigned char* buf, int size);
+    int get_queue4(uint8_t* buf, int size);
+    void put_queue5(unsigned char* buf, int size);
+    int get_queue5(uint8_t* buf, int size);
+    void put_queue6(unsigned char* buf, int size);
+    int get_queue6(uint8_t* buf, int size);
 
     long long GetBitRate();
     long long GetFrameNum();
@@ -90,6 +100,7 @@ public:
 private:
     int protindex;
     long long bitratebefore;
+    long long curbitrate;
 
 };
 

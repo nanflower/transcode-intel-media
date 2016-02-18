@@ -183,6 +183,7 @@ protected:
     bool               m_bStopEncoder;
 
 private:
+    long long frame;
     int perQP;
     long long BitrateBefore;
     virtual mfxStatus InitMfxEncParams(sParams *pParams);

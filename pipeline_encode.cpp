@@ -28,6 +28,11 @@ Copyright(c) 2005-2014 Intel Corporation. All Rights Reserved.
 
 FILE *fpout_v;
 FILE *fpout_v1;
+FILE *fpout_v2;
+FILE *fpout_v3;
+FILE *fpout_v4;
+FILE *fpout_v5;
+FILE *fpout_v6;
 FILE *fp_yuv;
 
 static void WipeMfxBitstream(mfxBitstream* pBitstream)
@@ -76,7 +81,12 @@ mfxStatus CEncTaskPool::Init(MFXVideoSession* pmfxSession, outudppool*  pLoopLis
         MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
     }
     fpout_v = fopen("transcodeV.264","wb+");
-    fpout_v1 = fopen("transcodeV1.264", "wb+");
+    fpout_v1 = fopen("transcodeV1.264","wb+");
+    fpout_v2 = fopen("transcodeV2.264","wb+");
+    fpout_v3 = fopen("transcodeV3.264","wb+");
+    fpout_v4 = fopen("transcodeV4.264","wb+");
+    fpout_v5 = fopen("transcodeV5.264","wb+");
+    fpout_v6 = fopen("transcodeV6.264","wb+");
     fp_yuv = fopen("tempV.yuv","ab+");
 
     return MFX_ERR_NONE;
@@ -248,6 +258,16 @@ mfxStatus sTask::WriteBitstream()
         fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
     else if(deviceid == 1)
         fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
+    else if(deviceid == 2)
+        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v2);
+    else if(deviceid == 3)
+        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v3);
+    else if(deviceid == 4)
+        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v4);
+    else if(deviceid == 5)
+        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v5);
+    else if(deviceid == 6)
+        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v6);
 
     //写输出
 //    m_pLoopListBuffer->Write( m_pSample, bVIDEO);
@@ -825,6 +845,7 @@ void CEncodingPipeline::DeleteAllocator()
 CEncodingPipeline::CEncodingPipeline()
 {
     perQP = 25;
+    frame = 1;
     BitrateBefore = 0;
     memset(&m_EncodeCtrl, 0, sizeof(mfxEncodeCtrl));
     m_pMfxENC = NULL;
@@ -1482,7 +1503,13 @@ mfxStatus CEncodingPipeline::Run()
             VppSyncPoint = NULL;
         }
 
-        m_EncodeCtrl.QP = perQP;
+        if(frame%24 == 1)
+            m_EncodeCtrl.QP = perQP;
+        else if(frame%24%6 == 1)
+            m_EncodeCtrl.QP = perQP + 3;
+        else
+            m_EncodeCtrl.QP = perQP + 12;
+
         for (;;)
         {
             // at this point surface for encoder contains either a frame from file or a frame processed by vpp
@@ -1491,6 +1518,7 @@ mfxStatus CEncodingPipeline::Run()
             MSDK_IGNORE_MFX_STS(sts, MFX_ERR_MORE_BITSTREAM);
             break;
         }
+        frame++;
     }
 
     // means that the input file has ended, need to go to buffering loops
@@ -1547,7 +1575,13 @@ mfxStatus CEncodingPipeline::Run()
                 VppSyncPoint = NULL;
             }
 
-            m_EncodeCtrl.QP = perQP;
+            if(frame%24 == 1)
+                m_EncodeCtrl.QP = perQP;
+            else if(frame%24%6 == 1)
+                m_EncodeCtrl.QP = perQP + 3;
+            else
+                m_EncodeCtrl.QP = perQP + 12;
+
             for (;;)
             {
                 sts = m_pMfxENC->EncodeFrameAsync(&m_EncodeCtrl, &m_pEncSurfaces[nEncSurfIdx], &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
@@ -1574,6 +1608,7 @@ mfxStatus CEncodingPipeline::Run()
                     break;
                 }
             }
+            frame++;
         }
 
         // MFX_ERR_MORE_DATA is the correct status to exit buffering loop with
@@ -1589,7 +1624,14 @@ mfxStatus CEncodingPipeline::Run()
         // get a free task (bit stream and sync point for encoder)
         sts = GetFreeTask(&pCurrentTask);
         MSDK_BREAK_ON_ERROR(sts);
-        m_EncodeCtrl.QP = perQP;
+
+        if(frame%24 == 1)
+            m_EncodeCtrl.QP = perQP;
+        else if(frame%24%6 == 1)
+            m_EncodeCtrl.QP = perQP + 3;
+        else
+            m_EncodeCtrl.QP = perQP + 12;
+
         for (;;)
         {
             sts = m_pMfxENC->EncodeFrameAsync(&m_EncodeCtrl, NULL, &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
@@ -1616,6 +1658,7 @@ mfxStatus CEncodingPipeline::Run()
                 break;
             }
         }
+        frame++;
         MSDK_BREAK_ON_ERROR(sts);
     }
 
