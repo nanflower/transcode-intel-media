@@ -15,10 +15,10 @@ transcodepool::~transcodepool()
 
 void transcodepool::Init()
 {
-    yQueue_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*720*576*6);
+    yQueue_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*720*576*12);
     yread_ptr = 0;
     ywrite_ptr = 0;
-    ybufsize = 720*576*6;
+    ybufsize = 720*576*12;
 
     fp_temp = fopen("temp.yuv","wb+");
     pthread_mutex_init(&lockerx, NULL);

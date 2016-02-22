@@ -304,7 +304,7 @@ void one_process::InitEncoderPar()
     m_EncoderParInfo.nCodecProfile = 100;
     m_EncoderParInfo.nFrameRate = 25;
     m_EncoderParInfo.nGopOptFlag = MFX_GOP_STRICT;
-    m_EncoderParInfo.nGopPicSize = 24;
+    m_EncoderParInfo.nGopPicSize = 60;
     m_EncoderParInfo.nGopRefDist = 6;
 //    m_EncoderParInfo.nLADepth = 49;
     m_EncoderParInfo.nNumSlice = 1;

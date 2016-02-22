@@ -1296,22 +1296,23 @@ mfxStatus CDecodingPipeline::ReadFrameFromBuffer(mfxBitstream* pBS)
     pData = (uint8_t*)av_mallocz(sizeof(uint8_t)*500000);
     memmove(pBS->Data, pBS->Data + pBS->DataOffset, pBS->DataLength);
     pBS->DataOffset = 0;
-//    while(pBS->MaxLength != pBS->DataLength)
+
+    int LastLength = pBS->MaxLength - pBS->DataLength;
+//    if( !decode_Buffer[m_deviceid]->getbuffer(pData, LastLength, &DataLength, &TimeStamp) )
 //    {
-//    while (1) {
-        int LastLength = pBS->MaxLength - pBS->DataLength;
-        if( !decode_Buffer[m_deviceid]->getbuffer(pData, LastLength, &DataLength, &TimeStamp) )
-        {
-            av_free(pData);
-            return MFX_TASK_BUSY;
-        }
-
-        memcpy( pBS->Data + pBS->DataLength, pData, DataLength);
-
-        pBS->DataLength += DataLength;
-        av_free(pData);
+//        av_free(pData);
+//        return MFX_TASK_BUSY;
 //    }
-//    printf(" DataLength = %d, MAXlenght =%d \n", pBS->DataLength, pBS->MaxLength);
+    while (1) {
+        decode_Buffer[m_deviceid]->getbuffer(pData, LastLength, &DataLength, &TimeStamp);
+        if(DataLength != 0)
+            break;
+    }
+
+    memcpy( pBS->Data + pBS->DataLength, pData, DataLength);
+
+    pBS->DataLength += DataLength;
+    av_free(pData);
 
 
     return MFX_ERR_NONE;

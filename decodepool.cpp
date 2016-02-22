@@ -29,11 +29,17 @@ void decodepool::Init()
 bool decodepool::getbuffer(uint8_t *pData, int LastLength, int *DataLength,unsigned long *plTimeStamp)
 {
 
-    while(1)
-    {
-         if( dewrite_ptr > deread_ptr  || ( (dewrite_ptr+50000) < deread_ptr) ){
-             break;
-         }
+//    while(1)
+//    {
+//         if( dewrite_ptr > deread_ptr  || ( (dewrite_ptr+50000) < deread_ptr) ){
+//             break;
+//         }
+//    }
+    if(dewrite_ptr == deread_ptr)
+        return false;
+    else if(dewrite_ptr == 0 && deread_ptr == decode_bufsize){
+        deread_ptr = 0;
+        return false;
     }
     int Length = 0;
 
