@@ -3,10 +3,10 @@
 #include "global.h"
 
 FILE *fp_write;
-FILE *fp_v;
-FILE *fp_v1;
-FILE *fp_a;
-FILE *fp_a1;
+//FILE *fp_v;
+//FILE *fp_v1;
+//FILE *fp_a;
+//FILE *fp_a1;
 
 pthread_mutex_t locker;
 uint8_t* q_buf;
@@ -68,6 +68,26 @@ pthread_mutex_t locker11;
 uint8_t* q_buf11;
 volatile int write_ptr11;
 volatile int read_ptr11;
+
+pthread_mutex_t locker12;
+uint8_t* q_buf12;
+volatile int write_ptr12;
+volatile int read_ptr12;
+
+pthread_mutex_t locker13;
+uint8_t* q_buf13;
+volatile int write_ptr13;
+volatile int read_ptr13;
+
+pthread_mutex_t locker14;
+uint8_t* q_buf14;
+volatile int write_ptr14;
+volatile int read_ptr14;
+
+pthread_mutex_t locker15;
+uint8_t* q_buf15;
+volatile int write_ptr15;
+volatile int read_ptr15;
 
 int write_buffer(void *opaque, uint8_t *buf, int buf_size){
     if(!feof(fp_write)){
@@ -222,6 +242,54 @@ int read_data11(void *opaque, uint8_t *buf, int buf_size) {
     return size;
 }
 
+int read_data12(void *opaque, uint8_t *buf, int buf_size) {
+
+    udpsocket* pTemp = (udpsocket*)opaque;
+    int size = buf_size;
+    bool ret;
+    do {
+        ret = pTemp->get_queue12( buf, size);
+    } while (ret);
+
+    return size;
+}
+
+int read_data13(void *opaque, uint8_t *buf, int buf_size) {
+
+    udpsocket* pTemp = (udpsocket*)opaque;
+    int size = buf_size;
+    bool ret;
+    do {
+        ret = pTemp->get_queue13( buf, size);
+    } while (ret);
+
+    return size;
+}
+
+int read_data14(void *opaque, uint8_t *buf, int buf_size) {
+
+    udpsocket* pTemp = (udpsocket*)opaque;
+    int size = buf_size;
+    bool ret;
+    do {
+        ret = pTemp->get_queue14( buf, size);
+    } while (ret);
+
+    return size;
+}
+
+int read_data15(void *opaque, uint8_t *buf, int buf_size) {
+
+    udpsocket* pTemp = (udpsocket*)opaque;
+    int size = buf_size;
+    bool ret;
+    do {
+        ret = pTemp->get_queue15( buf, size);
+    } while (ret);
+
+    return size;
+}
+
 udpsocket::udpsocket()
 {
     bitratebefore = 0;
@@ -288,6 +356,26 @@ udpsocket::udpsocket()
     write_ptr11 = 0;
     read_ptr11 = 0;
 
+    pthread_mutex_init(&locker12, NULL);
+    q_buf12 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    write_ptr12 = 0;
+    read_ptr12 = 0;
+
+    pthread_mutex_init(&locker13, NULL);
+    q_buf13 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    write_ptr13 = 0;
+    read_ptr13 = 0;
+
+    pthread_mutex_init(&locker14, NULL);
+    q_buf14 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    write_ptr14 = 0;
+    read_ptr14 = 0;
+
+    pthread_mutex_init(&locker15, NULL);
+    q_buf15 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    write_ptr15 = 0;
+    read_ptr15 = 0;
+
     fp_write=fopen("cuc60anniversary_start.aac","wb+"); //输出文件
 }
 
@@ -340,6 +428,22 @@ udpsocket::~udpsocket()
     else if(protindex == 12){
         pthread_mutex_destroy(&locker11);
         av_free(q_buf11);
+    }
+    else if(protindex == 13){
+        pthread_mutex_destroy(&locker12);
+        av_free(q_buf12);
+    }
+    else if(protindex == 14){
+        pthread_mutex_destroy(&locker13);
+        av_free(q_buf13);
+    }
+    else if(protindex == 15){
+        pthread_mutex_destroy(&locker14);
+        av_free(q_buf14);
+    }
+    else if(protindex == 16){
+        pthread_mutex_destroy(&locker15);
+        av_free(q_buf15);
     }
 }
 
@@ -429,10 +533,10 @@ int udpsocket::ts_demux(int index)
     AVCodecContext *AudioEncodeCtx[AUDIO_NUM];
     AVCodec *AudioEncoder[AUDIO_NUM];
 
-    fp_v = fopen("test0.mpg","wb+"); //输出文件
-    fp_v1 = fopen("test1.mpg" , "wb+");
-    fp_a = fopen("audio_out.aac","wb+");
-    fp_a1 = fopen("audio1.aac","wb+");
+//    fp_v = fopen("test0.mpg","wb+"); //输出文件
+//    fp_v1 = fopen("test1.mpg" , "wb+");
+//    fp_a = fopen("audio_out.aac","wb+");
+//    fp_a1 = fopen("audio1.aac","wb+");
 
     //FFMPEG
     av_register_all();
@@ -460,6 +564,14 @@ int udpsocket::ts_demux(int index)
         pb = avio_alloc_context(buffer, 4096, 0, NULL, read_data10, NULL, NULL);
     else if(protindex == 12)
         pb = avio_alloc_context(buffer, 4096, 0, NULL, read_data11, NULL, NULL);
+    else if(protindex == 13)
+        pb = avio_alloc_context(buffer, 4096, 0, NULL, read_data12, NULL, NULL);
+    else if(protindex == 14)
+        pb = avio_alloc_context(buffer, 4096, 0, NULL, read_data13, NULL, NULL);
+    else if(protindex == 15)
+        pb = avio_alloc_context(buffer, 4096, 0, NULL, read_data14, NULL, NULL);
+    else if(protindex == 16)
+        pb = avio_alloc_context(buffer, 4096, 0, NULL, read_data15, NULL, NULL);
     printf("thread %d pid %lu tid %lu\n",index,(unsigned long)getpid(),(unsigned long)pthread_self());
 
     if (!pb) {
@@ -626,7 +738,7 @@ int udpsocket::ts_demux(int index)
                 if (pkt.stream_index == videoindex[i]) {
                     decode_Buffer[protindex-1]->putbuffer(&pkt);
 
-                 }/*else if (pkt.stream_index == audioindex[i]) {
+                 }else if (pkt.stream_index == audioindex[i]) {
                     if (avcodec_decode_audio4(pAudioCodecCtx[i], pAudioframe[i], &frame_size, &pkt) >= 0) {
                         if (i == 0){
 
@@ -657,16 +769,16 @@ int udpsocket::ts_demux(int index)
                                 av_init_packet(&audio_pkt);
                                 avcodec_encode_audio2(AudioEncodeCtx[i], &audio_pkt, pOutAudioframe[i], &got_frame);
 //                                printf("Encode %d Packet\tsize:%d\tpts:%lld\n", protindex, audio_pkt.size, audio_pkt.pts);
-                                if(protindex == 1)
-                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a);
-                                else if(protindex == 2)
-                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a1);
+//                                if(protindex == 1)
+//                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a);
+//                                else if(protindex == 7)
+//                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a1);
                             }
                             av_free_packet(&audio_pkt);
 //                            av_free(&converted_input_samples);
                         }
                     }
-                }*/
+                }
             }
             av_free_packet(&pkt);
         }
@@ -696,6 +808,8 @@ void udpsocket::udp_ts_recv(void)
         port = 50101 + protindex;
     else if(protindex < 13)
         port = 50110 + protindex - 6;
+    else if(protindex < 19)
+        port = 50120 + protindex - 12;
     server_addr.sin_port = htons(port);
 
     /* 创建socket */
@@ -765,6 +879,14 @@ void udpsocket::udp_ts_recv(void)
                  put_queue10( buffer , len);
              else if(protindex == 12)
                  put_queue11( buffer , len);
+             else if(protindex == 13)
+                 put_queue12( buffer , len);
+             else if(protindex == 14)
+                 put_queue13( buffer , len);
+             else if(protindex == 15)
+                 put_queue14( buffer , len);
+             else if(protindex == 16)
+                 put_queue15( buffer , len);
          }
          else
          {
@@ -1292,6 +1414,174 @@ int udpsocket::get_queue11(uint8_t* buf, int size) {
     }
     read_ptr11 = (read_ptr11 + size) % bufsize;
     pthread_mutex_unlock(&locker11);
+
+    return 0;
+}
+
+void udpsocket::put_queue12(unsigned char* buf, int size) {
+    pthread_mutex_lock(&locker12);
+    if ((write_ptr12 + size) > bufsize) {
+        memcpy(q_buf12 + write_ptr12, buf, (bufsize - write_ptr12));
+        memcpy(q_buf12, buf+(bufsize - write_ptr12), size-(bufsize - write_ptr12));
+    } else {
+        memcpy(q_buf12 + write_ptr12, buf, size*sizeof(uint8_t));
+    }
+    write_ptr12 = (write_ptr12 + size) % bufsize;
+    pthread_mutex_unlock(&locker12);
+}
+
+int udpsocket::get_queue12(uint8_t* buf, int size) {
+    pthread_mutex_lock(&locker12);
+    int wrap = 0;
+
+    int pos = write_ptr12;
+
+    if (pos < read_ptr12) {
+        pos += bufsize;
+        if(size + read_ptr12 > bufsize)
+            wrap = 1;
+    }
+
+    if ( (read_ptr12 + size) > pos) {
+        pthread_mutex_unlock(&locker12);
+        return 1;
+    }
+
+    if (wrap) {
+        fprintf(stdout, "wrap...\n");
+        memcpy(buf, q_buf12 + read_ptr12, (bufsize - read_ptr12));
+        memcpy(buf+(bufsize - read_ptr12), q_buf12 + 0, size-(bufsize - read_ptr12));
+    } else {
+        memcpy(buf, q_buf12 + read_ptr12, sizeof(uint8_t)*size);
+    }
+    read_ptr12 = (read_ptr12 + size) % bufsize;
+    pthread_mutex_unlock(&locker12);
+
+    return 0;
+}
+
+void udpsocket::put_queue13(unsigned char* buf, int size) {
+    pthread_mutex_lock(&locker13);
+    if ((write_ptr13 + size) > bufsize) {
+        memcpy(q_buf13 + write_ptr13, buf, (bufsize - write_ptr13));
+        memcpy(q_buf13, buf+(bufsize - write_ptr13), size-(bufsize - write_ptr13));
+    } else {
+        memcpy(q_buf13 + write_ptr13, buf, size*sizeof(uint8_t));
+    }
+    write_ptr13 = (write_ptr13 + size) % bufsize;
+    pthread_mutex_unlock(&locker13);
+}
+
+int udpsocket::get_queue13(uint8_t* buf, int size) {
+    pthread_mutex_lock(&locker13);
+    int wrap = 0;
+
+    int pos = write_ptr13;
+
+    if (pos < read_ptr13) {
+        pos += bufsize;
+        if(size + read_ptr13 > bufsize)
+            wrap = 1;
+    }
+
+    if ( (read_ptr13 + size) > pos) {
+        pthread_mutex_unlock(&locker13);
+        return 1;
+    }
+
+    if (wrap) {
+        fprintf(stdout, "wrap...\n");
+        memcpy(buf, q_buf13 + read_ptr13, (bufsize - read_ptr13));
+        memcpy(buf+(bufsize - read_ptr13), q_buf13 + 0, size-(bufsize - read_ptr13));
+    } else {
+        memcpy(buf, q_buf13 + read_ptr13, sizeof(uint8_t)*size);
+    }
+    read_ptr13 = (read_ptr13 + size) % bufsize;
+    pthread_mutex_unlock(&locker13);
+
+    return 0;
+}
+
+void udpsocket::put_queue14(unsigned char* buf, int size) {
+    pthread_mutex_lock(&locker14);
+    if ((write_ptr14 + size) > bufsize) {
+        memcpy(q_buf14 + write_ptr14, buf, (bufsize - write_ptr14));
+        memcpy(q_buf14, buf+(bufsize - write_ptr14), size-(bufsize - write_ptr14));
+    } else {
+        memcpy(q_buf14 + write_ptr14, buf, size*sizeof(uint8_t));
+    }
+    write_ptr14 = (write_ptr14 + size) % bufsize;
+    pthread_mutex_unlock(&locker14);
+}
+
+int udpsocket::get_queue14(uint8_t* buf, int size) {
+    pthread_mutex_lock(&locker14);
+    int wrap = 0;
+
+    int pos = write_ptr14;
+
+    if (pos < read_ptr14) {
+        pos += bufsize;
+        if(size + read_ptr14 > bufsize)
+            wrap = 1;
+    }
+
+    if ( (read_ptr14 + size) > pos) {
+        pthread_mutex_unlock(&locker14);
+        return 1;
+    }
+
+    if (wrap) {
+        fprintf(stdout, "wrap...\n");
+        memcpy(buf, q_buf14 + read_ptr14, (bufsize - read_ptr14));
+        memcpy(buf+(bufsize - read_ptr14), q_buf14 + 0, size-(bufsize - read_ptr14));
+    } else {
+        memcpy(buf, q_buf14 + read_ptr14, sizeof(uint8_t)*size);
+    }
+    read_ptr14 = (read_ptr14 + size) % bufsize;
+    pthread_mutex_unlock(&locker14);
+
+    return 0;
+}
+
+void udpsocket::put_queue15(unsigned char* buf, int size) {
+    pthread_mutex_lock(&locker15);
+    if ((write_ptr15 + size) > bufsize) {
+        memcpy(q_buf15 + write_ptr15, buf, (bufsize - write_ptr15));
+        memcpy(q_buf15, buf+(bufsize - write_ptr15), size-(bufsize - write_ptr15));
+    } else {
+        memcpy(q_buf15 + write_ptr15, buf, size*sizeof(uint8_t));
+    }
+    write_ptr15 = (write_ptr15 + size) % bufsize;
+    pthread_mutex_unlock(&locker15);
+}
+
+int udpsocket::get_queue15(uint8_t* buf, int size) {
+    pthread_mutex_lock(&locker15);
+    int wrap = 0;
+
+    int pos = write_ptr15;
+
+    if (pos < read_ptr15) {
+        pos += bufsize;
+        if(size + read_ptr15 > bufsize)
+            wrap = 1;
+    }
+
+    if ( (read_ptr15 + size) > pos) {
+        pthread_mutex_unlock(&locker15);
+        return 1;
+    }
+
+    if (wrap) {
+        fprintf(stdout, "wrap...\n");
+        memcpy(buf, q_buf15 + read_ptr15, (bufsize - read_ptr15));
+        memcpy(buf+(bufsize - read_ptr15), q_buf15 + 0, size-(bufsize - read_ptr15));
+    } else {
+        memcpy(buf, q_buf15 + read_ptr15, sizeof(uint8_t)*size);
+    }
+    read_ptr15 = (read_ptr15 + size) % bufsize;
+    pthread_mutex_unlock(&locker15);
 
     return 0;
 }

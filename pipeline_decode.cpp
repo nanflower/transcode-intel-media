@@ -383,20 +383,20 @@ mfxStatus CDecodingPipeline::Init(sInputParams *pParams)
 //    MSDK_IGNORE_MFX_STS(sts, MFX_WRN_PARTIAL_ACCELERATION);
 //    MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 
-    PrintInfo();
-    printf(	"reserved[0] = %d, reserved[1] = %d, reserved[2] = %d, reserved3 = %d\n"
-    "AsyncDepth = %d,Protected = %d, IOPattern = %d, NumExtParam = %d, reserved2 = %d\n"
-    "INFOMFX: LowPower =%d , BRCParamMultiplier =%d, CodeId = %d, CodecProfile = %d \n"
-    "	CodecLevel = %d, NumThread = %d\n"
-    "   DecodedOrder = %d, ExtendedPicStruct = %d, TimeStampCalc = %d, SliceGroupsPresent = %d\n"
-    "   MaxDecFrameBuffering = %d, reserved2[0] = %d\n",
-    m_mfxVideoParams.reserved[0],m_mfxVideoParams.reserved[1],m_mfxVideoParams.reserved[2],
-    m_mfxVideoParams.reserved3,m_mfxVideoParams.AsyncDepth,m_mfxVideoParams.Protected,m_mfxVideoParams.IOPattern,
-    m_mfxVideoParams.NumExtParam,m_mfxVideoParams.reserved2,
-    m_mfxVideoParams.mfx.LowPower,m_mfxVideoParams.mfx.BRCParamMultiplier,m_mfxVideoParams.mfx.CodecId,
-    m_mfxVideoParams.mfx.CodecProfile,m_mfxVideoParams.mfx.CodecLevel,m_mfxVideoParams.mfx.NumThread,
-    m_mfxVideoParams.mfx.DecodedOrder,m_mfxVideoParams.mfx.ExtendedPicStruct,m_mfxVideoParams.mfx.TimeStampCalc,
-    m_mfxVideoParams.mfx.SliceGroupsPresent,m_mfxVideoParams.mfx.MaxDecFrameBuffering,m_mfxVideoParams.mfx.reserved2[0]);
+//    PrintInfo();
+//    printf(	"reserved[0] = %d, reserved[1] = %d, reserved[2] = %d, reserved3 = %d\n"
+//    "AsyncDepth = %d,Protected = %d, IOPattern = %d, NumExtParam = %d, reserved2 = %d\n"
+//    "INFOMFX: LowPower =%d , BRCParamMultiplier =%d, CodeId = %d, CodecProfile = %d \n"
+//    "	CodecLevel = %d, NumThread = %d\n"
+//    "   DecodedOrder = %d, ExtendedPicStruct = %d, TimeStampCalc = %d, SliceGroupsPresent = %d\n"
+//    "   MaxDecFrameBuffering = %d, reserved2[0] = %d\n",
+//    m_mfxVideoParams.reserved[0],m_mfxVideoParams.reserved[1],m_mfxVideoParams.reserved[2],
+//    m_mfxVideoParams.reserved3,m_mfxVideoParams.AsyncDepth,m_mfxVideoParams.Protected,m_mfxVideoParams.IOPattern,
+//    m_mfxVideoParams.NumExtParam,m_mfxVideoParams.reserved2,
+//    m_mfxVideoParams.mfx.LowPower,m_mfxVideoParams.mfx.BRCParamMultiplier,m_mfxVideoParams.mfx.CodecId,
+//    m_mfxVideoParams.mfx.CodecProfile,m_mfxVideoParams.mfx.CodecLevel,m_mfxVideoParams.mfx.NumThread,
+//    m_mfxVideoParams.mfx.DecodedOrder,m_mfxVideoParams.mfx.ExtendedPicStruct,m_mfxVideoParams.mfx.TimeStampCalc,
+//    m_mfxVideoParams.mfx.SliceGroupsPresent,m_mfxVideoParams.mfx.MaxDecFrameBuffering,m_mfxVideoParams.mfx.reserved2[0]);
 //    printf("",);
 
     sts = m_pmfxDEC->Init(&m_mfxVideoParams);
@@ -556,6 +556,7 @@ mfxStatus CDecodingPipeline::InitMfxParams(sInputParams *pParams)
 //        }
 //    }
     // read a portion of data for DecodeHeader function
+
     sts = ReadFrameFromBuffer(&m_mfxBS);
 
     if (MFX_ERR_MORE_DATA == sts)
@@ -1301,6 +1302,7 @@ mfxStatus CDecodingPipeline::ReadFrameFromBuffer(mfxBitstream* pBS)
         int LastLength = pBS->MaxLength - pBS->DataLength;
         if( !decode_Buffer[m_deviceid]->getbuffer(pData, LastLength, &DataLength, &TimeStamp) )
         {
+            av_free(pData);
             return MFX_TASK_BUSY;
         }
 

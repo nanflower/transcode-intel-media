@@ -33,17 +33,19 @@ bool transcodepool::GetFrame( uint8_t *YFrameBuf, int DataLength, unsigned long 
     int height = 576;
     DataLength = width * height * 3/2;
 
-    while(1){
-        if( (ywrite_ptr == yread_ptr + DataLength) || (ywrite_ptr == DataLength&&yread_ptr == ybufsize) ){
-            break;
-        }
-    }
+//    while(1){
+//        if( (ywrite_ptr == yread_ptr + DataLength) || (ywrite_ptr == DataLength&&yread_ptr == ybufsize) ){
+//            break;
+//        }
+//    }
 //    printf("out write = %d, out read = %d, pts =%lld \n",ywrite_ptr, yread_ptr, TimeStamp);
 
     pthread_mutex_lock(&lockerx);
 
-    if(ywrite_ptr == yread_ptr || (yread_ptr == ybufsize && ywrite_ptr == 0) )
+    if(ywrite_ptr == yread_ptr || (yread_ptr == ybufsize && ywrite_ptr == 0) ){
+        pthread_mutex_unlock(&lockerx);
         return false;
+    }
     else if(yread_ptr == ybufsize){
         memcpy(YFrameBuf, yQueue_buf, DataLength);
         yread_ptr = DataLength;

@@ -75,6 +75,12 @@ bool decodepool::getbuffer(uint8_t *pData, int LastLength, int *DataLength,unsig
             *DataLength = Length;
         }
     }
+    else {
+        *plTimeStamp = DeTimeStamp;
+        pthread_mutex_unlock(&lockdecode);
+
+        return false;
+    }
 
     *plTimeStamp = DeTimeStamp;
     pthread_mutex_unlock(&lockdecode);

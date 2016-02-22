@@ -183,6 +183,7 @@ protected:
     bool               m_bStopEncoder;
 
 private:
+    unsigned long TimeB;
     long long frame;
     int perQP;
     long long BitrateBefore;

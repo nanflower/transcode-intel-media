@@ -26,7 +26,7 @@ Copyright(c) 2005-2014 Intel Corporation. All Rights Reserved.
 #include "vaapi_device.h"
 #endif
 
-//FILE *fpout_v;
+FILE *fpout_v;
 //FILE *fpout_v1;
 //FILE *fpout_v2;
 //FILE *fpout_v3;
@@ -80,7 +80,7 @@ mfxStatus CEncTaskPool::Init(MFXVideoSession* pmfxSession, outudppool*  pLoopLis
         sts = m_pTasks[i].Init( nBufferSize, pLoopListBuffer, pSample );
         MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
     }
-//    fpout_v = fopen("transcodeV.264","wb+");
+    fpout_v = fopen("transcodeV.264","wb+");
 //    fpout_v1 = fopen("transcodeV1.264","wb+");
 //    fpout_v2 = fopen("transcodeV2.264","wb+");
 //    fpout_v3 = fopen("transcodeV3.264","wb+");
@@ -254,8 +254,8 @@ mfxStatus sTask::WriteBitstream()
     m_pSample->lDecodeTimeStamp = mfxBS.DecodeTimeStamp;
 
 //    if(m_pLoopListBuffer->fpVideo)
-//    if(deviceid == 0)
-//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
+    if(deviceid == 0)
+        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
 //    else if(deviceid == 1)
 //        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
 //    else if(deviceid == 2)
@@ -844,6 +844,7 @@ void CEncodingPipeline::DeleteAllocator()
 
 CEncodingPipeline::CEncodingPipeline()
 {
+    TimeB = 0;
     perQP = 25;
     frame = 1;
     BitrateBefore = 0;
@@ -1197,6 +1198,7 @@ mfxStatus CEncodingPipeline::LoadFrameFromBuffer(mfxFrameSurface1* pSurface,  un
 
     if( !transcode_Buffer[m_deviceid]->GetFrame( YFrameBuf, YLength, plTimeStamp ))
     {
+        av_free(YFrameBuf);
         return MFX_TASK_BUSY;
     }
 //    if( !m_pVd->GetFrame( YFrameBuf, YLength, plTimeStamp, 0 ))
@@ -1444,8 +1446,14 @@ mfxStatus CEncodingPipeline::Run()
 //            printf(" get frame form buffer \n");
             sts = LoadFrameFromBuffer( pSurf, &lTimeStamp );
 //            printf("timestamp = %ld, length = %d \n",lTimeStamp, pSurf->Info.BufferSize);
+
             if( sts == MFX_TASK_BUSY )
                 continue;
+            if(m_deviceid == 0 ){
+                printf(" channel %d timestampX = %ld, frame = %d \n", m_deviceid, lTimeStamp - TimeB, frame);
+                TimeB = lTimeStamp;
+            }
+
             MSDK_BREAK_ON_ERROR(sts);
             pSurf->Data.TimeStamp = lTimeStamp;
             if ( MVC_ENABLED & m_MVCflags )
