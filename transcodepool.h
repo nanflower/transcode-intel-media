@@ -38,9 +38,9 @@ public:
     transcodepool();
     ~transcodepool();
     void Init();
-    bool GetFrame( uint8_t *YFrameBuf,  int DataLength, unsigned long * plTimeStamp, int i);
+    bool GetFrame( uint8_t *YFrameBuf,  int DataLength, unsigned long * plTimeStamp);
     bool PutFrame( mfxFrameSurface1 *pSurface);
-    bool PutFrame( AVFrame *pVideoframe , int index);
+    bool PutFrame( AVFrame *pVideoframe );
 
 private:
     pthread_mutex_t lockerx;

@@ -188,7 +188,7 @@ private:
     long long BitrateBefore;
     virtual mfxStatus InitMfxEncParams(sParams *pParams);
     virtual mfxStatus InitMfxVppParams(sParams *pParams);
-    virtual mfxStatus InitSaveBuffer( int nW, int nH );
+    virtual mfxStatus InitSaveBuffer(  );
     virtual mfxStatus AllocAndInitVppDoNotUse();
     virtual void FreeVppDoNotUse();
     virtual mfxStatus AllocAndInitMVCSeqDesc();

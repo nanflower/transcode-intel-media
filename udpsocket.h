@@ -92,6 +92,16 @@ public:
     int get_queue5(uint8_t* buf, int size);
     void put_queue6(unsigned char* buf, int size);
     int get_queue6(uint8_t* buf, int size);
+    void put_queue7(unsigned char* buf, int size);
+    int get_queue7(uint8_t* buf, int size);
+    void put_queue8(unsigned char* buf, int size);
+    int get_queue8(uint8_t* buf, int size);
+    void put_queue9(unsigned char* buf, int size);
+    int get_queue9(uint8_t* buf, int size);
+    void put_queue10(unsigned char* buf, int size);
+    int get_queue10(uint8_t* buf, int size);
+    void put_queue11(unsigned char* buf, int size);
+    int get_queue11(uint8_t* buf, int size);
 
     long long GetBitRate();
     long long GetFrameNum();

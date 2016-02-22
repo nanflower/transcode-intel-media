@@ -37,7 +37,7 @@ Copyright(c) 2005-2015 Intel Corporation. All Rights Reserved.
 //#pragma warning(disable : 4100)
 
 #define __SYNC_WA // avoid sync issue on Media SDK side
-FILE *fp_decode;
+//FILE *fp_decode;
 
 void WipeMfxBitstream(mfxBitstream* pBitstream)
 {
@@ -139,7 +139,7 @@ bool CheckVersion(mfxVersion* version, msdkAPIFeature feature)
 
 CDecodingPipeline::CDecodingPipeline()
 {
-    fp_decode = fopen("decode.mpg","wb+"); //输出文件
+//    fp_decode = fopen("decode.mpg","wb+"); //输出文件
 
     m_deviceid = 0;
 //    m_InputReader = NULL;
@@ -1299,7 +1299,7 @@ mfxStatus CDecodingPipeline::ReadFrameFromBuffer(mfxBitstream* pBS)
 //    {
 //    while (1) {
         int LastLength = pBS->MaxLength - pBS->DataLength;
-        if( !decode_Buffer[m_deviceid]->getbuffer(pData, LastLength, &DataLength, &TimeStamp, 0) )
+        if( !decode_Buffer[m_deviceid]->getbuffer(pData, LastLength, &DataLength, &TimeStamp) )
         {
             return MFX_TASK_BUSY;
         }
@@ -1307,6 +1307,7 @@ mfxStatus CDecodingPipeline::ReadFrameFromBuffer(mfxBitstream* pBS)
         memcpy( pBS->Data + pBS->DataLength, pData, DataLength);
 
         pBS->DataLength += DataLength;
+        av_free(pData);
 //    }
 //    printf(" DataLength = %d, MAXlenght =%d \n", pBS->DataLength, pBS->MaxLength);
 

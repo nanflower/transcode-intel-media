@@ -18,9 +18,9 @@ MainWindow::MainWindow(QWidget *parent) :
             g_pLoopListBuffer[i]->m_LoopIndex = i;//2*i+1;
         }
     }
-    for(int i=0; i<7; i++){
+    for(int i=0; i<12; i++){
         decode_Buffer[i] = new decodepool();
-        decode_Buffer[i]->Init(i);
+        decode_Buffer[i]->Init();
         transcode_Buffer[i] = new transcodepool();
         transcode_Buffer[i]->Init();
     }

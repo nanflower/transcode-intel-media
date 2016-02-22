@@ -26,14 +26,14 @@ Copyright(c) 2005-2014 Intel Corporation. All Rights Reserved.
 #include "vaapi_device.h"
 #endif
 
-FILE *fpout_v;
-FILE *fpout_v1;
-FILE *fpout_v2;
-FILE *fpout_v3;
-FILE *fpout_v4;
-FILE *fpout_v5;
-FILE *fpout_v6;
-FILE *fp_yuv;
+//FILE *fpout_v;
+//FILE *fpout_v1;
+//FILE *fpout_v2;
+//FILE *fpout_v3;
+//FILE *fpout_v4;
+//FILE *fpout_v5;
+//FILE *fpout_v6;
+//FILE *fp_yuv;
 
 static void WipeMfxBitstream(mfxBitstream* pBitstream)
 {
@@ -80,14 +80,14 @@ mfxStatus CEncTaskPool::Init(MFXVideoSession* pmfxSession, outudppool*  pLoopLis
         sts = m_pTasks[i].Init( nBufferSize, pLoopListBuffer, pSample );
         MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
     }
-    fpout_v = fopen("transcodeV.264","wb+");
-    fpout_v1 = fopen("transcodeV1.264","wb+");
-    fpout_v2 = fopen("transcodeV2.264","wb+");
-    fpout_v3 = fopen("transcodeV3.264","wb+");
-    fpout_v4 = fopen("transcodeV4.264","wb+");
-    fpout_v5 = fopen("transcodeV5.264","wb+");
-    fpout_v6 = fopen("transcodeV6.264","wb+");
-    fp_yuv = fopen("tempV.yuv","ab+");
+//    fpout_v = fopen("transcodeV.264","wb+");
+//    fpout_v1 = fopen("transcodeV1.264","wb+");
+//    fpout_v2 = fopen("transcodeV2.264","wb+");
+//    fpout_v3 = fopen("transcodeV3.264","wb+");
+//    fpout_v4 = fopen("transcodeV4.264","wb+");
+//    fpout_v5 = fopen("transcodeV5.264","wb+");
+//    fpout_v6 = fopen("transcodeV6.264","wb+");
+//    fp_yuv = fopen("tempV.yuv","ab+");
 
     return MFX_ERR_NONE;
 }
@@ -254,20 +254,20 @@ mfxStatus sTask::WriteBitstream()
     m_pSample->lDecodeTimeStamp = mfxBS.DecodeTimeStamp;
 
 //    if(m_pLoopListBuffer->fpVideo)
-    if(deviceid == 0)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
-    else if(deviceid == 1)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
-    else if(deviceid == 2)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v2);
-    else if(deviceid == 3)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v3);
-    else if(deviceid == 4)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v4);
-    else if(deviceid == 5)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v5);
-    else if(deviceid == 6)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v6);
+//    if(deviceid == 0)
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
+//    else if(deviceid == 1)
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
+//    else if(deviceid == 2)
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v2);
+//    else if(deviceid == 3)
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v3);
+//    else if(deviceid == 4)
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v4);
+//    else if(deviceid == 5)
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v5);
+//    else if(deviceid == 6)
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v6);
 
     //写输出
 //    m_pLoopListBuffer->Write( m_pSample, bVIDEO);
@@ -926,7 +926,7 @@ CEncodingPipeline::~CEncodingPipeline()
     }
 }
 
-mfxStatus CEncodingPipeline::InitSaveBuffer( int nW, int nH )
+mfxStatus CEncodingPipeline::InitSaveBuffer(  )
 {
     mfxStatus sts = MFX_ERR_NONE;
 
@@ -934,8 +934,8 @@ mfxStatus CEncodingPipeline::InitSaveBuffer( int nW, int nH )
 
     if(  NULL == m_pLoopListBuffer )
     {
-        long lPitch  = ((nW &~ 15) * 12+ 7) / 8;
-        long lHeight = (nH + 31) &~ 31;
+//        long lPitch  = ((nW &~ 15) * 12+ 7) / 8;
+//        long lHeight = (nH + 31) &~ 31;
         m_pLoopListBuffer = g_pLoopListBuffer[m_deviceid];
         //m_pLoopListBuffer  = new CLoopListBuffer(lPitch*lHeight*2);
 //        if(m_deviceid == 0)
@@ -969,7 +969,7 @@ mfxStatus CEncodingPipeline::Init( sParams *pParams )
     m_MVCflags = pParams->MVC_flags;
 
     // prepare save buffer
-    sts = InitSaveBuffer( pParams->nDstWidth, pParams->nDstHeight );
+    sts = InitSaveBuffer( );
     MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 
     // we set version to 1.0 and later we will query actual version of the library which will got leaded
@@ -1195,7 +1195,7 @@ mfxStatus CEncodingPipeline::LoadFrameFromBuffer(mfxFrameSurface1* pSurface,  un
 
     int YLength = 0;
 
-    if( !transcode_Buffer[m_deviceid]->GetFrame( YFrameBuf, YLength, plTimeStamp, 0 ))
+    if( !transcode_Buffer[m_deviceid]->GetFrame( YFrameBuf, YLength, plTimeStamp ))
     {
         return MFX_TASK_BUSY;
     }

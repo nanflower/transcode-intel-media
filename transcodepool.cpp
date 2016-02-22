@@ -26,7 +26,7 @@ void transcodepool::Init()
     TimeStamp = 0;
 }
 
-bool transcodepool::GetFrame( uint8_t *YFrameBuf, int DataLength, unsigned long * plTimeStamp, int i )
+bool transcodepool::GetFrame( uint8_t *YFrameBuf, int DataLength, unsigned long * plTimeStamp)
 {
 
     int width = 720;
@@ -59,7 +59,7 @@ bool transcodepool::GetFrame( uint8_t *YFrameBuf, int DataLength, unsigned long 
     return true;
 }
 
-bool transcodepool::PutFrame( AVFrame *pVideoframe, int i )
+bool transcodepool::PutFrame( AVFrame *pVideoframe )
 {
 
     TimeStamp = pVideoframe->pts;

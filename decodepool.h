@@ -28,9 +28,9 @@ class decodepool
 public:
     decodepool();
     ~decodepool();
-    void Init(int index);
-    bool getbuffer( uint8_t *pData, int LastLength, int *DataLength, unsigned long *plTimeStamp, int index );
-    bool putbuffer( AVPacket *pVideoPacket, int index);
+    void Init();
+    bool getbuffer( uint8_t *pData, int LastLength, int *DataLength, unsigned long *plTimeStamp);
+    bool putbuffer( AVPacket *pVideoPacket);
 
 private:
     pthread_mutex_t lockdecode;
