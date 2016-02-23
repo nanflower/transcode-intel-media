@@ -254,8 +254,8 @@ mfxStatus sTask::WriteBitstream()
     m_pSample->lDecodeTimeStamp = mfxBS.DecodeTimeStamp;
 
 //    if(m_pLoopListBuffer->fpVideo)
-    if(deviceid == 0)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
+//    if(deviceid == 15)
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
 //    else if(deviceid == 1)
 //        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
 //    else if(deviceid == 2)
@@ -433,7 +433,7 @@ mfxStatus CEncodingPipeline::InitMfxEncParams(sParams *pInParams)
     else if ( m_MfxEncParams.mfx.RateControlMethod == MFX_RATECONTROL_CQP )
     {
         m_MfxEncParams.mfx.QPI = pInParams->nQPI;
-        m_MfxEncParams.mfx.QPP = pInParams->nQPP+5;
+        m_MfxEncParams.mfx.QPP = pInParams->nQPP+3;
         m_MfxEncParams.mfx.QPB = pInParams->nQPB+12;
     }
     else if( m_MfxEncParams.mfx.RateControlMethod == MFX_RATECONTROL_LA )
@@ -1449,10 +1449,10 @@ mfxStatus CEncodingPipeline::Run()
 
             if( sts == MFX_TASK_BUSY )
                 continue;
-            if(m_deviceid == 0 ){
-                printf(" channel %d timestampX = %ld, frame = %d \n", m_deviceid, lTimeStamp - TimeB, frame);
-                TimeB = lTimeStamp;
-            }
+//            if(m_deviceid == 0 ){
+//                printf(" channel %d timestampX = %ld, frame = %d \n", m_deviceid, lTimeStamp - TimeB, frame);
+//                TimeB = lTimeStamp;
+//            }
 
             MSDK_BREAK_ON_ERROR(sts);
             pSurf->Data.TimeStamp = lTimeStamp;

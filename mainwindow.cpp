@@ -24,18 +24,9 @@ MainWindow::MainWindow(QWidget *parent) :
         transcode_Buffer[i] = new transcodepool();
         transcode_Buffer[i]->Init();
     }
-//        else
-//        {
-//            g_pLoopListBuffer[i] = new CLoopListBuffer(200*188);
-//            g_pLoopListBuffer[i]->m_LoopIndex = i;//(i-7)*2;
-//        }
-//    }
-
 
     udp udpsocketrev;
     udpsocketrev.Init();
-
-
 
 }
 
