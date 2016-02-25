@@ -27,7 +27,7 @@ Copyright(c) 2005-2014 Intel Corporation. All Rights Reserved.
 #endif
 
 FILE *fpout_v;
-//FILE *fpout_v1;
+FILE *fpout_v1;
 //FILE *fpout_v2;
 //FILE *fpout_v3;
 //FILE *fpout_v4;
@@ -81,7 +81,7 @@ mfxStatus CEncTaskPool::Init(MFXVideoSession* pmfxSession, outudppool*  pLoopLis
         MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
     }
     fpout_v = fopen("transcodeV.264","wb+");
-//    fpout_v1 = fopen("transcodeV1.264","wb+");
+    fpout_v1 = fopen("transcodeV1.264","wb+");
 //    fpout_v2 = fopen("transcodeV2.264","wb+");
 //    fpout_v3 = fopen("transcodeV3.264","wb+");
 //    fpout_v4 = fopen("transcodeV4.264","wb+");
@@ -254,10 +254,10 @@ mfxStatus sTask::WriteBitstream()
     m_pSample->lDecodeTimeStamp = mfxBS.DecodeTimeStamp;
 
 //    if(m_pLoopListBuffer->fpVideo)
-//    if(deviceid == 15)
-//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
-//    else if(deviceid == 1)
-//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
+    if(deviceid == 5)
+        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
+    else if(deviceid == 1)
+        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
 //    else if(deviceid == 2)
 //        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v2);
 //    else if(deviceid == 3)
@@ -397,6 +397,7 @@ mfxStatus CEncodingPipeline::InitMfxEncParams(sParams *pInParams)
     m_MfxEncParams.mfx.CodecLevel = pInParams->nCodecLevel;
     m_MfxEncParams.mfx.CodecProfile = pInParams->nCodecProfile;
     m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;// pInParams->nPicStruct;
+//    m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_FIELD_TFF;
     m_MfxEncParams.mfx.RateControlMethod = pInParams->nRateControlMethod;
     m_MfxEncParams.mfx.GopPicSize = pInParams->nGopPicSize;
     m_MfxEncParams.mfx.GopRefDist = pInParams->nGopRefDist;
@@ -534,6 +535,7 @@ mfxStatus CEncodingPipeline::InitMfxVppParams(sParams *pInParams)
     m_mfxVppParams.vpp.In.FourCC    = MFX_FOURCC_NV12;
 //    m_mfxVppParams.vpp.In.FourCC    = MFX_FOURCC_YV12;
     m_mfxVppParams.vpp.In.PicStruct = pInParams->nPicStruct;
+//    m_mfxVppParams.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
     ConvertFrameRate(pInParams->dFrameRate, &m_mfxVppParams.vpp.In.FrameRateExtN, &m_mfxVppParams.vpp.In.FrameRateExtD);
 
     // width must be a multiple of 16
@@ -1163,7 +1165,7 @@ mfxStatus CEncodingPipeline::GetFreeTask(sTask **ppTask)
     return sts;
 }
 
-mfxStatus CEncodingPipeline::LoadFrameFromBuffer(mfxFrameSurface1* pSurface,  unsigned long *plTimeStamp)
+mfxStatus CEncodingPipeline::LoadFrameFromBuffer(mfxFrameSurface1* pSurface, unsigned long long *plTimeStamp)
 {
     MSDK_CHECK_POINTER(pSurface, MFX_ERR_NULL_PTR);
     MSDK_CHECK_POINTER(transcode_Buffer[m_deviceid], MFX_ERR_NULL_PTR);
@@ -1400,7 +1402,7 @@ mfxStatus CEncodingPipeline::Run()
     // Since in sample we support just 2 views
     // we will change this value between 0 and 1 in case of MVC
     mfxU16 currViewNum = 0;
-    unsigned long  lTimeStamp = 0;
+    unsigned long long  lTimeStamp = 0;
 
     sts = MFX_ERR_NONE;
 

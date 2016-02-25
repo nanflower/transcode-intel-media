@@ -202,7 +202,7 @@ private:
     virtual void DeleteFrames();
     mfxStatus AllocateSufficientBuffer(mfxBitstream* pBS);
     virtual mfxStatus GetFreeTask(sTask **ppTask );
-    virtual mfxStatus LoadFrameFromBuffer(mfxFrameSurface1* pSurface,  unsigned long *plTimeStamp);
+    virtual mfxStatus LoadFrameFromBuffer(mfxFrameSurface1* pSurface, unsigned long long *plTimeStamp);
     mfxU16 GetFreeSurfaceIndex(mfxFrameSurface1* pSurfacesPool, mfxU16 nPoolSize);
     mfxU16 GetFreeSurface(mfxFrameSurface1* pSurfacesPool, mfxU16 nPoolSize);
     mfxStatus ExtendMfxBitstream(mfxBitstream* pBitstream, mfxU32 nSize);

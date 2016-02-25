@@ -26,7 +26,7 @@ void decodepool::Init()
 //    printf("init decode pool\n");
 }
 
-bool decodepool::getbuffer(uint8_t *pData, int LastLength, int *DataLength,unsigned long *plTimeStamp)
+bool decodepool::getbuffer(uint8_t *pData, int LastLength, int *DataLength,unsigned long long *plTimeStamp)
 {
 
 //    while(1)

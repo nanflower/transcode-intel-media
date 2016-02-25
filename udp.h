@@ -4,7 +4,6 @@
 #include "udpsocket.h"
 #include "one_process.h"
 #include "decodepool.h"
-#define Channel_NUM 14
 
 class udp
 {

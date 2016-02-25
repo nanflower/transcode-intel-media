@@ -325,6 +325,7 @@ void one_process::InitVideoEncoderParam( sParams *pParams )
     pParams->nCodecLevel = m_EncoderParInfo.nCodecLevel;
     pParams->nCodecProfile = m_EncoderParInfo.nCodecProfile;
     pParams->nPicStruct = MFX_PICSTRUCT_PROGRESSIVE;
+//    pParams->nPicStruct = MFX_PICSTRUCT_FIELD_TFF;
     pParams->nRateControlMethod = m_EncoderParInfo.nRateControlMethod;
     pParams->nGopRefDist = m_EncoderParInfo.nGopRefDist;
     pParams->nGopPicSize = m_EncoderParInfo.nGopPicSize;

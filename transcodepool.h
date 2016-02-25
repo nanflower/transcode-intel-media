@@ -38,7 +38,7 @@ public:
     transcodepool();
     ~transcodepool();
     void Init();
-    bool GetFrame( uint8_t *YFrameBuf,  int DataLength, unsigned long * plTimeStamp);
+    bool GetFrame( uint8_t *YFrameBuf,  int DataLength, unsigned long long * plTimeStamp);
     bool PutFrame( mfxFrameSurface1 *pSurface);
     bool PutFrame( AVFrame *pVideoframe );
 
@@ -48,7 +48,7 @@ private:
     int ybufsize;
     volatile int ywrite_ptr;
     volatile int yread_ptr;
-    unsigned long TimeStamp;
+    unsigned long long TimeStamp;
 };
 
 #endif // TRANSCODEPOOL_H

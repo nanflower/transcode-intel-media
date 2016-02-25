@@ -26,7 +26,7 @@ void transcodepool::Init()
     TimeStamp = 0;
 }
 
-bool transcodepool::GetFrame( uint8_t *YFrameBuf, int DataLength, unsigned long * plTimeStamp)
+bool transcodepool::GetFrame( uint8_t *YFrameBuf, int DataLength, unsigned long long * plTimeStamp)
 {
 
     int width = 720;

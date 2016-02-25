@@ -1292,7 +1292,7 @@ mfxStatus CDecodingPipeline::ReadFrameFromBuffer(mfxBitstream* pBS)
     MSDK_CHECK_POINTER(decode_Buffer[m_deviceid], MFX_ERR_NULL_PTR);
     int DataLength=0;
     uint8_t* pData;
-    unsigned long TimeStamp = 0;
+    unsigned long long TimeStamp = 0;
     pData = (uint8_t*)av_mallocz(sizeof(uint8_t)*500000);
     memmove(pBS->Data, pBS->Data + pBS->DataOffset, pBS->DataLength);
     pBS->DataOffset = 0;

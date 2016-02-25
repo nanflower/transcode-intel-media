@@ -29,7 +29,7 @@ public:
     decodepool();
     ~decodepool();
     void Init();
-    bool getbuffer( uint8_t *pData, int LastLength, int *DataLength, unsigned long *plTimeStamp);
+    bool getbuffer( uint8_t *pData, int LastLength, int *DataLength, unsigned long long *plTimeStamp);
     bool putbuffer( AVPacket *pVideoPacket);
 
 private:
@@ -38,7 +38,7 @@ private:
     int decode_bufsize;
     volatile int dewrite_ptr;
     volatile int deread_ptr;
-    unsigned long DeTimeStamp;
+    unsigned long long DeTimeStamp;
 //    pthread_mutex_t lockdecode;
 //    uint8_t* decode_buffer;
 //    int decode_bufsize;

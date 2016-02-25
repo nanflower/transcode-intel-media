@@ -5,8 +5,8 @@
 FILE *fp_write;
 //FILE *fp_v;
 //FILE *fp_v1;
-//FILE *fp_a;
-//FILE *fp_a1;
+FILE *fp_a;
+FILE *fp_a1;
 
 pthread_mutex_t locker;
 uint8_t* q_buf;
@@ -739,6 +739,7 @@ int udpsocket::ts_demux(int index)
                     decode_Buffer[protindex-1]->putbuffer(&pkt);
 
                  }else if (pkt.stream_index == audioindex[i]) {
+                    pAudioframe[i] = av_frame_alloc();
                     if (avcodec_decode_audio4(pAudioCodecCtx[i], pAudioframe[i], &frame_size, &pkt) >= 0) {
                         if (i == 0){
 
@@ -753,6 +754,7 @@ int udpsocket::ts_demux(int index)
                             int got_frame=0;
                             while(av_audio_fifo_size(af[i]) >= AudioEncodeCtx[i]->frame_size){
                                 int frame_size = FFMIN(av_audio_fifo_size(af[i]),AudioEncodeCtx[i]->frame_size);
+                                pOutAudioframe[i] = av_frame_alloc();
                                 pOutAudioframe[i]->nb_samples =  frame_size;
                                 pOutAudioframe[i]->channel_layout = AudioEncodeCtx[i]->channel_layout;
                                 pOutAudioframe[i]->sample_rate = AudioEncodeCtx[i]->sample_rate;
@@ -771,13 +773,16 @@ int udpsocket::ts_demux(int index)
 //                                printf("Encode %d Packet\tsize:%d\tpts:%lld\n", protindex, audio_pkt.size, audio_pkt.pts);
 //                                if(protindex == 1)
 //                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a);
-//                                else if(protindex == 7)
+//                                else if(protindex == 10)
 //                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a1);
+                                av_free_packet(&audio_pkt);
+                                av_frame_free(&pOutAudioframe[0]);
                             }
-                            av_free_packet(&audio_pkt);
+                            av_freep(&converted_input_samples);
 //                            av_free(&converted_input_samples);
                         }
                     }
+                    av_frame_free(&pAudioframe[0]);
                 }
             }
             av_free_packet(&pkt);
@@ -832,14 +837,18 @@ void udpsocket::udp_ts_recv(void)
          exit(1);
     }
     /* 数据传输 */
-
+    /* 定义一个地址，用于捕获客户端地址 */
+    struct sockaddr_in client_addr;
+    socklen_t client_addr_length = sizeof(client_addr);
+    /* 接收数据 */
+    uint8_t buffer[BUFFER_SIZE];
     while(1)
     {
-         /* 定义一个地址，用于捕获客户端地址 */
-         struct sockaddr_in client_addr;
-         socklen_t client_addr_length = sizeof(client_addr);
-         /* 接收数据 */
-         uint8_t buffer[BUFFER_SIZE];
+//         /* 定义一个地址，用于捕获客户端地址 */
+//         struct sockaddr_in client_addr;
+//         socklen_t client_addr_length = sizeof(client_addr);
+//         /* 接收数据 */
+//         uint8_t buffer[BUFFER_SIZE];
          bzero(buffer, BUFFER_SIZE);
          struct timeval tv;
          fd_set readfds;
