@@ -15,10 +15,10 @@ decodepool::~decodepool()
 void decodepool::Init()
 {
 
-    decode_buffer = (uint8_t*)av_mallocz(sizeof(uint8_t)*100000*2);
+    decode_buffer = (uint8_t*)av_mallocz(sizeof(uint8_t)*100000*5);
     deread_ptr = 0;
     dewrite_ptr = 0;
-    decode_bufsize = 100000*2;
+    decode_bufsize = 100000*5;
 
     pthread_mutex_init(&lockdecode, NULL);
 

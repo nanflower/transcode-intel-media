@@ -294,85 +294,85 @@ udpsocket::udpsocket()
 {
     bitratebefore = 0;
     curbitrate = 0;
-    bufsize = 1024*256;
+    bufsize = 1024*512;
 
     pthread_mutex_init(&locker, NULL);
-    q_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr = 0;
     read_ptr = 0;
 
     pthread_mutex_init(&locker1, NULL);
-    q_buf1 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf1 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr1 = 0;
     read_ptr1 = 0;
 
     pthread_mutex_init(&locker2, NULL);
-    q_buf2 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf2 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr2 = 0;
     read_ptr2 = 0;
 
     pthread_mutex_init(&locker3, NULL);
-    q_buf3 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf3 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr3 = 0;
     read_ptr3 = 0;
 
     pthread_mutex_init(&locker4, NULL);
-    q_buf4 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf4 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr4 = 0;
     read_ptr4 = 0;
 
     pthread_mutex_init(&locker5, NULL);
-    q_buf5 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf5 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr5 = 0;
     read_ptr5 = 0;
 
     pthread_mutex_init(&locker6, NULL);
-    q_buf6 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf6 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr6 = 0;
     read_ptr6 = 0;
 
     pthread_mutex_init(&locker7, NULL);
-    q_buf7 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf7 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr7 = 0;
     read_ptr7 = 0;
 
     pthread_mutex_init(&locker8, NULL);
-    q_buf8 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf8 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr8 = 0;
     read_ptr8 = 0;
 
     pthread_mutex_init(&locker9, NULL);
-    q_buf9 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf9 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr9 = 0;
     read_ptr9 = 0;
 
     pthread_mutex_init(&locker10, NULL);
-    q_buf10 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf10 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr10 = 0;
     read_ptr10 = 0;
 
     pthread_mutex_init(&locker11, NULL);
-    q_buf11 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf11 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr11 = 0;
     read_ptr11 = 0;
 
     pthread_mutex_init(&locker12, NULL);
-    q_buf12 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf12 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr12 = 0;
     read_ptr12 = 0;
 
     pthread_mutex_init(&locker13, NULL);
-    q_buf13 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf13 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr13 = 0;
     read_ptr13 = 0;
 
     pthread_mutex_init(&locker14, NULL);
-    q_buf14 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf14 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr14 = 0;
     read_ptr14 = 0;
 
     pthread_mutex_init(&locker15, NULL);
-    q_buf15 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*256);
+    q_buf15 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr15 = 0;
     read_ptr15 = 0;
 
@@ -1615,4 +1615,9 @@ long long udpsocket::GetFrameNum()
 void udpsocket::SetQP(int QP)
 {
     m_transProcess->SetQP(QP);
+}
+
+void udpsocket::SetDelay(int Time)
+{
+    m_transProcess->SetDelay(Time);
 }

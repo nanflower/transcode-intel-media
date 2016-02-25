@@ -129,6 +129,7 @@ public:
     long long GetBitRate();
     long long GetFrameNum();
     void SetQP(int QP);
+    void SetDelay(int Time);
     void ClearVideoBuffer();
     void Quit();
     void StopEncoder( bool bStop );
@@ -186,6 +187,7 @@ private:
     unsigned long TimeB;
     long long frame;
     int perQP;
+    int TimeDelay;
     long long BitrateBefore;
     virtual mfxStatus InitMfxEncParams(sParams *pParams);
     virtual mfxStatus InitMfxVppParams(sParams *pParams);

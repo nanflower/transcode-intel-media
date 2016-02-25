@@ -388,3 +388,8 @@ void one_process::SetQP(int QP)
     m_pVideoEncoder->SetQP(QP);
 }
 
+void one_process::SetDelay(int Time)
+{
+    m_pVideoEncoder->SetDelay(Time);
+}
+

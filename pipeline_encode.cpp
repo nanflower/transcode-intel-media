@@ -655,6 +655,11 @@ void CEncodingPipeline::SetQP(int QP)
     perQP = QP;
 }
 
+void CEncodingPipeline::SetDelay(int Time)
+{
+    TimeDelay = Time;
+}
+
 void CEncodingPipeline::ClearVideoBuffer()
 {
     if( m_pLoopListBuffer )
@@ -848,6 +853,7 @@ CEncodingPipeline::CEncodingPipeline()
 {
     TimeB = 0;
     perQP = 25;
+    TimeDelay = 0;
     frame = 1;
     BitrateBefore = 0;
     memset(&m_EncodeCtrl, 0, sizeof(mfxEncodeCtrl));
@@ -1520,6 +1526,12 @@ mfxStatus CEncodingPipeline::Run()
         else
             m_EncodeCtrl.QP = perQP + 12;
 
+        if(TimeDelay > 0)
+        {
+            usleep(40000*TimeDelay);
+            TimeDelay = 0;
+        }
+
         for (;;)
         {
             // at this point surface for encoder contains either a frame from file or a frame processed by vpp
@@ -1587,10 +1599,22 @@ mfxStatus CEncodingPipeline::Run()
 
             if(frame%24 == 1)
                 m_EncodeCtrl.QP = perQP;
-            else if(frame%24%6 == 1)
+            else if(frame%24%6 == 1){
+                if(perQP < 24)
+                    perQP = perQP - 1;
                 m_EncodeCtrl.QP = perQP + 3;
-            else
+            }
+            else{
+                if(perQP < 25)
+                    perQP = perQP - 1;
                 m_EncodeCtrl.QP = perQP + 12;
+            }
+
+            if(TimeDelay > 0)
+            {
+                usleep(40000*TimeDelay);
+                TimeDelay = 0;
+            }
 
             for (;;)
             {
@@ -1641,6 +1665,12 @@ mfxStatus CEncodingPipeline::Run()
             m_EncodeCtrl.QP = perQP + 3;
         else
             m_EncodeCtrl.QP = perQP + 12;
+
+        if(TimeDelay > 0)
+        {
+            usleep(40000*TimeDelay);
+            TimeDelay = 0;
+        }
 
         for (;;)
         {

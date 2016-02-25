@@ -114,6 +114,7 @@ public:
     long long GetBitRate();
     long long GetFrameNum();
     void SetQP(int QP);
+    void SetDelay(int Time);
 
 private:
     int protindex;

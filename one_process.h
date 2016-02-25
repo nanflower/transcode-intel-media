@@ -100,6 +100,7 @@ public:
     long long GetBitRate(void);
     long long GetFrameNum(void);
     void SetQP(int QP);
+    void SetDelay(int Time);
 
 
 private:

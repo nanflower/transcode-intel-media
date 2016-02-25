@@ -28,13 +28,13 @@ int udp::Init()
         }
 
         int AverageNum = 12;
-        int AverageNum1 = 6;
+        int AverageNum1 = 36;
         long long BitrateCount = 0, RealBitrateCount = 0, RealBitrateCount1 = 0;
         long long Bitrate[MaxChannel] = {0};
         long long BitrateAv[MaxChannel] = {0};
         long long BitrateAv1[MaxChannel] = {0};
         long long RealBitrate[MaxChannel][12] = {0};
-        long long RealBitrate1[MaxChannel][6] = {0};
+        long long RealBitrate1[MaxChannel][36] = {0};
         long long Number[MaxChannel] = {0};
         long long NumberBefore[MaxChannel] = {0};
         int qpi = 25;
@@ -62,7 +62,7 @@ int udp::Init()
                     BitrateAv[0] += Bitrate[0]/AverageNum;
                     BitrateAv[0] -= RealBitrate[0][(NumberBefore[0]+i+1)%AverageNum]/AverageNum;
                     RealBitrate[0][(NumberBefore[0]+i+1)%AverageNum] = Bitrate[0];
-                    //6average
+                    //36average
                     BitrateAv1[0] += Bitrate[0]/AverageNum1;
                     BitrateAv1[0] -= RealBitrate1[0][(NumberBefore[0]+i+1)%AverageNum1]/AverageNum1;
                     RealBitrate1[0][(NumberBefore[0]+i+1)%AverageNum1] = Bitrate[0];
@@ -72,6 +72,8 @@ int udp::Init()
                 NumberBefore[0] = Number[0];
                 for(int i=1; i<ChannelNum; i++){
                     Number[i] = m_ChannelGet[i]->GetFrameNum();
+                    if((Number[i-1] - Number[i])%48<1)
+                        m_ChannelGet[i]->SetDelay( 1 - ( Number[i-1]-Number[i] )%48 );
                     if(Number[i] != NumberBefore[i]){
                         Bitrate[i] = m_ChannelGet[i]->GetBitRate()/(Number[i] - NumberBefore[i]);
                         for(int j=0; j<Number[i] - NumberBefore[i]; j++){
@@ -80,7 +82,7 @@ int udp::Init()
                             BitrateAv[i] -= RealBitrate[i][(NumberBefore[i]+j+1)%AverageNum]/AverageNum;
                             RealBitrate[i][(NumberBefore[i]+j+1)%AverageNum] = Bitrate[i];
 
-                            //6average
+                            //36average
                             BitrateAv1[i] += Bitrate[i]/AverageNum1;
                             BitrateAv1[i] -= RealBitrate1[i][(NumberBefore[i]+j+1)%AverageNum1]/AverageNum1;
                             RealBitrate1[i][(NumberBefore[i]+j+1)%AverageNum1] = Bitrate[i];
@@ -99,8 +101,11 @@ int udp::Init()
                 fputs(str2, m_writeframe);
                 fputc('\r', m_writeframe);
                 fputc('\n', m_writeframe);
-                qpi = 53 - (int)(((long double)log((long double)RealBitrateCount*25)-19.8991)/(-0.1213));
+                qpi = 54 - (int)(((long double)log((long double)RealBitrateCount1*25)-19.8991)/(-0.1213));
+//                printf("frame = %lld , %lld , %lld ,%lld , %lld , %lld \n",Number[0], Number[1], Number[2], Number[5], Number[9],Number[12]);
                 printf("frame = %lld ,bitrate = %lld, count = %lld, qpi = %d\n",Number[0], RealBitrateCount*25, RealBitrateCount1*25, qpi);
+//                if(qpi > 24)
+//                    qpi = qpi + 2;
                 if(qpi > 40)
                     qpi = 40;
                 else if(qpi < 23)
