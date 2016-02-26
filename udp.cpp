@@ -38,6 +38,7 @@ int udp::Init()
         long long Number[MaxChannel] = {0};
         long long NumberBefore[MaxChannel] = {0};
         int qpi = 25;
+        int qpi1 = 25;
         int qp[MaxChannel] = {0};
         char str[100];
         char str1[100];
@@ -102,14 +103,17 @@ int udp::Init()
                 fputc('\r', m_writeframe);
                 fputc('\n', m_writeframe);
                 qpi = 54 - (int)(((long double)log((long double)RealBitrateCount1*25)-19.8991)/(-0.1213));
+                qpi1 = 54 - (int)(((long double)log((long double)RealBitrateCount*25)-19.8991)/(-0.1213));
 //                printf("frame = %lld , %lld , %lld ,%lld , %lld , %lld \n",Number[0], Number[1], Number[2], Number[5], Number[9],Number[12]);
-                printf("frame = %lld ,bitrate = %lld, count = %lld, qpi = %d\n",Number[0], RealBitrateCount*25, RealBitrateCount1*25, qpi);
+                printf("frame = %lld ,count = %lld, qpi = %d, qpi1 = %d\n",Number[0], RealBitrateCount*25, qpi , qpi1);
+                if(qpi1 > qpi)
+                    qpi = qpi1;
 //                if(qpi > 24)
 //                    qpi = qpi + 2;
                 if(qpi > 40)
                     qpi = 40;
-                else if(qpi < 23)
-                    qpi = 23;
+                else if(qpi < 22)
+                    qpi = 22;
                 if(Number[0] > 100){
                     for(int i=0; i<ChannelNum; i++){
 //                        if(Bitrate[i]*25<500000){

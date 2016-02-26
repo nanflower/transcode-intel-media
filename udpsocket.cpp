@@ -5,8 +5,8 @@
 FILE *fp_write;
 //FILE *fp_v;
 //FILE *fp_v1;
-FILE *fp_a;
-FILE *fp_a1;
+//FILE *fp_a;
+//FILE *fp_a1;
 
 pthread_mutex_t locker;
 uint8_t* q_buf;
@@ -744,7 +744,7 @@ int udpsocket::ts_demux(int index)
                         if (i == 0){
 
                             av_samples_alloc(&converted_input_samples, NULL, AudioEncodeCtx[i]->channels, pAudioframe[i]->nb_samples, AudioEncodeCtx[i]->sample_fmt, 0);
-                                        int error = 0;
+                            int error = 0;
                             if((error = swr_convert(resample_context[i], &converted_input_samples, pAudioframe[i]->nb_samples,
                                                    (const uint8_t**)pAudioframe[i]->extended_data, pAudioframe[i]->nb_samples))<0){
                                 printf("error  : %d\n",error);
@@ -775,6 +775,7 @@ int udpsocket::ts_demux(int index)
 //                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a);
 //                                else if(protindex == 10)
 //                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a1);
+//                                send_Buffer[protindex+15]
                                 av_free_packet(&audio_pkt);
                                 av_frame_free(&pOutAudioframe[0]);
                             }

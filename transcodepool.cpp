@@ -15,10 +15,10 @@ transcodepool::~transcodepool()
 
 void transcodepool::Init()
 {
-    yQueue_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*720*576*12);
+    yQueue_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*720*576*15);
     yread_ptr = 0;
     ywrite_ptr = 0;
-    ybufsize = 720*576*12;
+    ybufsize = 720*576*15;
 
     fp_temp = fopen("temp.yuv","wb+");
     pthread_mutex_init(&lockerx, NULL);
@@ -56,6 +56,7 @@ bool transcodepool::GetFrame( uint8_t *YFrameBuf, int DataLength, unsigned long 
     }
 
     *plTimeStamp = TimeStamp;
+    TimeStamp = 0;
 
     pthread_mutex_unlock(&lockerx);
     return true;
@@ -63,8 +64,8 @@ bool transcodepool::GetFrame( uint8_t *YFrameBuf, int DataLength, unsigned long 
 
 bool transcodepool::PutFrame( AVFrame *pVideoframe )
 {
-
-    TimeStamp = pVideoframe->pts;
+    if(TimeStamp == 0 )
+        TimeStamp = pVideoframe->pts;
 
     pthread_mutex_lock(&lockerx);
 

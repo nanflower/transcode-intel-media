@@ -14,8 +14,15 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         if(i < 16)
         {
-            g_pLoopListBuffer[i] = new outudppool(1);
-            g_pLoopListBuffer[i]->m_LoopIndex = i;//2*i+1;
+            //VIDEO 0-15
+            send_Buffer[i] = new outudppool(1);
+            send_Buffer[i]->m_deviceid = i;//2*i+1;
+        }
+        else
+        {
+            //AUDIO 16-31
+            send_Buffer[i] = new outudppool(1);
+            send_Buffer[i]->m_deviceid = i;
         }
     }
     for(int i=0; i<16; i++){

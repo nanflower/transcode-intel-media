@@ -30,7 +30,7 @@ public:
     void ClearBuffer();
     FILE *fpVideo;
     int m_nSampleCount;
-    int m_LoopIndex;
+    int m_deviceid;
 
 private:
     unsigned long m_tmpPcr;

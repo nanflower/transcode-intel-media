@@ -945,7 +945,7 @@ mfxStatus CEncodingPipeline::InitSaveBuffer(  )
     {
 //        long lPitch  = ((nW &~ 15) * 12+ 7) / 8;
 //        long lHeight = (nH + 31) &~ 31;
-        m_pLoopListBuffer = g_pLoopListBuffer[m_deviceid];
+        m_pLoopListBuffer = send_Buffer[m_deviceid];
         //m_pLoopListBuffer  = new CLoopListBuffer(lPitch*lHeight*2);
 //        if(m_deviceid == 0)
 //        {

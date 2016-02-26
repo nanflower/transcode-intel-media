@@ -1,4 +1,5 @@
 #include "one_process.h"
+#include "global.h"
 
 one_process::one_process( int index)
 {
@@ -200,6 +201,8 @@ void one_process::run_udp_send(){
          /* 接收数据 */
          uint8_t *buffer[BUFFER_SIZE];
          bzero(buffer, BUFFER_SIZE);
+
+//         send_Buffer[m_index]->get
 //         struct timeval tv;
 //         fd_set readfds;
 //         tv.tv_sec = 3;
@@ -210,11 +213,13 @@ void one_process::run_udp_send(){
 
 //         if (FD_ISSET(server_socket_fd,&readfds))
 //         {
+
         int len = sendto(server_socket_fd, buffer, BUFFER_SIZE,0,(struct sockaddr*)&client_addr, sizeof(client_addr_length));
         if (len == -1)
         {
             printf("send data error!\n");
         }
+        av_free(buffer);
 //         }
 //         else
 //         {
