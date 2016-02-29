@@ -256,7 +256,7 @@ mfxStatus sTask::WriteBitstream()
 //    if(m_pLoopListBuffer->fpVideo)
     if(deviceid == 5)
         fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
-    else if(deviceid == 1)
+    else if(deviceid == 3)
         fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
 //    else if(deviceid == 2)
 //        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v2);

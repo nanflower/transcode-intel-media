@@ -127,6 +127,8 @@ int udp::Init()
 //                        }
 //                        else
                         qp[i] = qpi;
+                        if(Bitrate[i]*25>1200000 && BitrateCount>15000000)
+                            qp[i] += 1;
                         m_ChannelGet[i]->SetQP(qp[i]);
                     }
                     sprintf(str1, "%d", qpi*100000);
