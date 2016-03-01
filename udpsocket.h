@@ -75,6 +75,8 @@ public:
     static void* ts_demuxer( void *param );
     static void* video_encoder(void *param);
     void run_video_encoder(void);
+    static void* udp_send(void *param);
+    void run_udp_send(void);
 //    tspoolqueue* m_tsRecvPool;
     one_process* m_transProcess;
     //pool

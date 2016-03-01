@@ -1203,7 +1203,6 @@ unsigned int MFX_STDCALL CDecodingPipeline::DeliverThreadFunc(void* ctx)
 
 void CDecodingPipeline::PrintPerFrameStat(bool force)
 {
-    force = true;
 //#define MY_COUNT 1 // TODO: this will be cmd option
 //#define MY_THRESHOLD 10000.0
 //    if ((!(m_output_count % MY_COUNT) && (m_eWorkMode != MODE_PERFORMANCE)) || force) {

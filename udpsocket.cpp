@@ -463,6 +463,14 @@ void udpsocket::thread_init(int index)
     if( 0 != pthread_create( &ts_demux_thread, NULL, ts_demuxer, this ) )
         printf("%s:%d  Error: Create ts demux thread failed !!!\n", __FILE__, __LINE__ );
 
+//    pthread_t udp_send_thread;
+//    memset( &udp_send_thread, 0, sizeof( udp_send_thread ) );
+
+//    if( 0 != pthread_create( &udp_send_thread, NULL, udp_send, this ))
+//        printf("%s:%d  Error: Create video encoder thread failed !!!\n", __FILE__, __LINE__ );
+
+//    pthread_detach(udp_send_thread);
+
     pthread_detach(ts_demux_thread);
     pthread_detach(udp_recv_thread);
 
@@ -485,6 +493,82 @@ void *udpsocket::ts_demuxer(void *pArg)
         pTemp->ts_demux(1);
     //    pTemp->thread_test();
     return (void*)NULL;
+}
+
+void *udpsocket::udp_send(void *pArg)
+{
+    udpsocket* pTemp = (udpsocket*) pArg;
+    if( pTemp )
+        pTemp->run_udp_send();
+    return (void*)NULL;
+}
+
+void udpsocket::run_udp_send(){
+    /* 创建UDP套接口 */
+    struct sockaddr_in server_addr;
+    bzero(&server_addr, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    //server_addr.sin_addr.s_addr = inet_addr("1.8.84.12");
+    int port = 0;
+    port = 10791 + protindex;
+    server_addr.sin_port = htons(port);
+
+    /* 创建socket */
+    int server_socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(server_socket_fd == -1)
+    {
+         perror("Create Socket Failed:");
+         exit(1);
+    }
+
+    memset(server_addr.sin_zero,0,8);
+     int re_flag=1;
+     int re_len=sizeof(int);
+     setsockopt(server_socket_fd,SOL_SOCKET,SO_REUSEADDR,&re_flag,re_len);
+
+    /* 绑定套接口 */
+    if(-1 == (bind(server_socket_fd,(struct sockaddr*)&server_addr,sizeof(server_addr))))
+    {
+         perror("Server Bind Failed:");
+         exit(1);
+    }
+    /* 数据传输 */
+
+    while(1)
+    {
+         /* 定义一个地址，用于捕获客户端地址 */
+         struct sockaddr_in client_addr;
+         socklen_t client_addr_length = sizeof(client_addr);
+         /* 接收数据 */
+         uint8_t *buffer[BUFFER_SIZE];
+         bzero(buffer, BUFFER_SIZE);
+
+//         send_Buffer[m_index]->get
+//         struct timeval tv;
+//         fd_set readfds;
+//         tv.tv_sec = 3;
+//         tv.tv_usec = 10;
+//         FD_ZERO(&readfds);
+//         FD_SET(server_socket_fd, &readfds);
+//         select(server_socket_fd+1,&readfds,NULL, NULL, &tv);
+
+//         if (FD_ISSET(server_socket_fd,&readfds))
+//         {
+
+        int len = sendto(server_socket_fd, buffer, BUFFER_SIZE,0,(struct sockaddr*)&client_addr, sizeof(client_addr_length));
+        if (len == -1)
+        {
+            printf("send data error!\n");
+        }
+        av_free(buffer);
+//         }
+//         else
+//         {
+//             printf("error is %d\n",errno);
+//             printf("timeout!there is no data arrived!\n");
+//         }
+    }
 }
 
 int udpsocket::ts_demux(int index)
