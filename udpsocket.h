@@ -56,6 +56,7 @@ extern "C"
 #define AUDIO_NUM 1
 //#define VIDEOBUF_SIZE 10000*188
 //#define BUF_SIZE 4096*2000 //read buffer
+#define BUF_SIZE 1024//8
 #define BUFFER_SIZE 4096      //recvfrom buffer
 //#define FILE_NAME_MAX_SIZE 512
 #define AVCODEC_MAX_AUDIO_FRAME_SIZE 192000

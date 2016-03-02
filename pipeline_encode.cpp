@@ -256,7 +256,7 @@ mfxStatus sTask::WriteBitstream()
 //    if(m_pLoopListBuffer->fpVideo)
     if(deviceid == 5)
         fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
-    else if(deviceid == 3)
+    else if(deviceid == 4)
         fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
 //    else if(deviceid == 2)
 //        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v2);
@@ -396,8 +396,8 @@ mfxStatus CEncodingPipeline::InitMfxEncParams(sParams *pInParams)
 {
     m_MfxEncParams.mfx.CodecLevel = pInParams->nCodecLevel;
     m_MfxEncParams.mfx.CodecProfile = pInParams->nCodecProfile;
-    m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;// pInParams->nPicStruct;
-//    m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_FIELD_TFF;
+//    m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;// pInParams->nPicStruct;
+    m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_FIELD_TFF;
     m_MfxEncParams.mfx.RateControlMethod = pInParams->nRateControlMethod;
     m_MfxEncParams.mfx.GopPicSize = pInParams->nGopPicSize;
     m_MfxEncParams.mfx.GopRefDist = pInParams->nGopRefDist;
@@ -851,7 +851,6 @@ void CEncodingPipeline::DeleteAllocator()
 
 CEncodingPipeline::CEncodingPipeline()
 {
-    TimeB = 0;
     perQP = 25;
     TimeDelay = 0;
     frame = 1;
