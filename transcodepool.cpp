@@ -1,6 +1,6 @@
 #include "transcodepool.h"
 
-FILE *fp_temp;
+//FILE *fp_temp;
 
 transcodepool::transcodepool()
 {
@@ -20,7 +20,7 @@ void transcodepool::Init()
     ywrite_ptr = 0;
     ybufsize = 720*576*15;
 
-    fp_temp = fopen("temp.yuv","wb+");
+//    fp_temp = fopen("temp.yuv","wb+");
     pthread_mutex_init(&lockerx, NULL);
 
     TimeStamp = 0;

@@ -144,6 +144,7 @@ protected:
     MFXVideoSession m_mfxSession;
     MFXVideoENCODE* m_pMfxENC;
     MFXVideoVPP* m_pMfxVPP;
+    bool                m_bUseVPP;
 
     mfxVideoParam m_MfxEncParams;
     mfxVideoParam m_mfxVppParams;
@@ -163,6 +164,9 @@ protected:
     mfxFrameAllocResponse m_VppResponse;  // memory allocation response for vpp
 
     mfxU32 m_nNumView;
+
+    mfxExtVPPDoUse m_VppDoUse;
+    mfxExtVPPDeinterlacing m_deinterlaceConfig;
 
     // for disabling VPP algorithms
     mfxExtVPPDoNotUse m_VppDoNotUse;
@@ -192,6 +196,7 @@ private:
     virtual mfxStatus InitMfxVppParams(sParams *pParams);
     virtual mfxStatus InitSaveBuffer(  );
     virtual mfxStatus AllocAndInitVppDoNotUse();
+    virtual mfxStatus AllocAndInitVppDoUse();
     virtual void FreeVppDoNotUse();
     virtual mfxStatus AllocAndInitMVCSeqDesc();
     virtual void FreeMVCSeqDesc();

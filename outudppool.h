@@ -20,16 +20,8 @@ public:
     outudppool( unsigned long lBufSize = NLOOPBUF_SIZE );
     virtual ~outudppool( void );
 
-    bool Get( PSAMPLE pSample, bool bGetSampleFromBuffer = true );
-    bool Write(const PSAMPLE pSample , bool isVideo);
-    bool WriteTsPacket(BYTE* pData);
-    bool GetTsPacket(BYTE* pData);
-    bool BufferIsNull(){ return ( m_lHead == m_lRear ); }
-    bool BufferIsAlmostFull();
-    int GetSampleCount();
-    void ClearBuffer();
-    FILE *fpVideo;
-    int m_nSampleCount;
+    bool getbuffer( uint8_t *pData, int LastLength, int *DataLength, unsigned long long *plTimeStamp);
+    bool putbuffer( uint8_t *pData, int DataLength, unsigned long long plTimeStamp);
     int m_deviceid;
 
 private:

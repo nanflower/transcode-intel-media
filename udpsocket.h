@@ -71,7 +71,7 @@ public:
     static void* udp_tsrecv(void *param);
     void udp_ts_recv(void);
 //    static int read_data(void *opaque, uint8_t *buf, int buf_size);
-    int ts_demux(int index);
+    int ts_demux(void);
     int thread_test();
     static void* ts_demuxer( void *param );
     static void* video_encoder(void *param);

@@ -8,13 +8,13 @@ outudppool::outudppool( unsigned long lBufSize )
     if( NULL != m_pabyBuffer )
         memset( m_pabyBuffer, 0, m_lBufferSize );
 
-    m_lHead = 0;
-    m_lRear = 0;
-    m_nSampleCount = 0;
-    continuity_cnt = 0;
-    fpVideo = NULL;
-    m_tmpPcr = 0;
     pthread_mutex_init( &m_mutex, NULL );
+//    decode_buffer = (uint8_t*)av_mallocz(sizeof(uint8_t)*100000*5);
+//    deread_ptr = 0;
+//    dewrite_ptr = 0;
+//    decode_bufsize = 100000*5;
+
+//    DeTimeStamp = 0;
 }
 
 outudppool::~outudppool(void)
@@ -27,89 +27,88 @@ outudppool::~outudppool(void)
     pthread_mutex_destroy( &m_mutex );
 }
 
-bool outudppool::Get( PSAMPLE pGetSample, bool bGetSampleFromBuffer )
-{
-    if( 0 == m_nSampleCount )	//	buffer is empty
-        return false;
+//bool decodepool::getbuffer(uint8_t *pData, int LastLength, int *DataLength,unsigned long long *plTimeStamp)
+//{
+//    if(dewrite_ptr == deread_ptr)
+//        return false;
+//    else if(dewrite_ptr == 0 && deread_ptr == decode_bufsize){
+//        deread_ptr = 0;
+//        return false;
+//    }
+//    int Length = 0;
 
-    if( NULL == m_pabyBuffer || NULL == pGetSample )
-        return false;
+//    pthread_mutex_lock(&lockdecode);
+//    if(dewrite_ptr > deread_ptr)
+//    {
+//        Length = dewrite_ptr - deread_ptr;
+//        if(LastLength < Length){
+//            memcpy( pData, decode_buffer + deread_ptr, LastLength);
+//            deread_ptr += LastLength;
+//            *DataLength = LastLength;
+//        }
+//        else{
+//            memcpy( pData, decode_buffer + deread_ptr, Length);
+//            deread_ptr = dewrite_ptr;
+//            *DataLength = Length;
+//        }
+//    }
+//    else if(dewrite_ptr < deread_ptr)
+//    {
+//        Length = decode_bufsize - deread_ptr + dewrite_ptr;
+//        if(LastLength <Length){
+//            if(decode_bufsize - deread_ptr > LastLength){
+//                memcpy( pData, decode_buffer + deread_ptr, LastLength);
+//                deread_ptr += LastLength;
+//                *DataLength = LastLength;
+//            }
+//            else{
+//                memcpy( pData, decode_buffer + deread_ptr, decode_bufsize - deread_ptr);
+//                memcpy( pData + decode_bufsize - deread_ptr, decode_buffer, LastLength - decode_bufsize + deread_ptr);
+//                deread_ptr = LastLength - decode_bufsize + deread_ptr;
+//                *DataLength = LastLength;
+//            }
+//        }
+//        else{
+//            memcpy( pData, decode_buffer + deread_ptr, decode_bufsize - deread_ptr);
+//            memcpy( pData + decode_bufsize - deread_ptr, decode_buffer, dewrite_ptr);
+//            deread_ptr = dewrite_ptr;
+//            *DataLength = Length;
+//        }
+//    }
+//    else {
+//        *plTimeStamp = DeTimeStamp;
+//        pthread_mutex_unlock(&lockdecode);
 
-    pthread_mutex_lock( &m_mutex );
-    bool bRet = true;
-    PBYTE pBuf = m_pabyBuffer;
-    PSAMPLE pSample = (PSAMPLE)(pBuf+m_lHead);
-    unsigned long lRear = m_lRear;
-    unsigned long lSize = pSample->lSampleLength+sizeof( pSample->lTimeStamp )+sizeof( pSample->lSampleLength )
-            +sizeof( pSample->lDecodeTimeStamp );
-    if( lSize >= m_lBufferSize)
-        return false;
+//        return false;
+//    }
 
-    memcpy( pGetSample, pSample, lSize );
+//    *plTimeStamp = DeTimeStamp;
+//    pthread_mutex_unlock(&lockdecode);
 
-    if( lRear > m_lHead )
-    {
-        if( ( lRear - m_lHead ) >= lSize )
-        {
-            if( bGetSampleFromBuffer )
-            {
-                m_lHead += lSize;
-                --m_nSampleCount;
-            }
-        }
-        else
-        {
-            bRet = false;
-        }
-    }
-    else
-    {
-        if( NLOOPBUF_SIZE - m_lHead >= lSize && pSample->lSampleLength != 0 )
-        {
-            if( bGetSampleFromBuffer )
-            {
-                m_lHead += lSize;
-                --m_nSampleCount;
-            }
-        }
-        else
-        {
-            pSample = (PSAMPLE)pBuf;
-            lSize = pSample->lSampleLength+sizeof( pSample->lTimeStamp )+sizeof( pSample->lSampleLength )
-                    +sizeof( pSample->lDecodeTimeStamp );
-            if( lSize >= m_lBufferSize)
-                return false;
-            memcpy( pGetSample, pSample, lSize );
-            if( lRear >= lSize )
-            {
-                if( bGetSampleFromBuffer )
-                {
-                    m_lHead = lSize;
-                    --m_nSampleCount;
-                }
-            }
-            else
-                bRet = false;
-        }
-    }
+//    return true;
+//}
 
-    pthread_mutex_unlock( &m_mutex );
-    return bRet;
-}
+//bool decodepool::putbuffer(AVPacket *pVideoPacket)
+//{
 
-int outudppool::GetSampleCount()
-{
-    return m_nSampleCount;
-}
+//    pthread_mutex_lock(&lockdecode);
 
-void outudppool::ClearBuffer()
-{
-    if( NULL != m_pabyBuffer )
-        memset( m_pabyBuffer, 0, m_lBufferSize );
+//    DeTimeStamp = pVideoPacket->pts;
+//    if(dewrite_ptr + pVideoPacket->size <= decode_bufsize){
+//        memcpy(decode_buffer + dewrite_ptr, pVideoPacket->data, pVideoPacket->size);
+//        dewrite_ptr += pVideoPacket->size;
+//    }
+//    else{
+//        int LastLength = decode_bufsize - dewrite_ptr;
+//        memcpy(decode_buffer + dewrite_ptr, pVideoPacket->data, LastLength);
+//        memcpy(decode_buffer , pVideoPacket->data + LastLength, pVideoPacket->size - LastLength);
+//        dewrite_ptr = pVideoPacket->size - LastLength;
 
-    m_lHead = 0;
-    m_lRear = 0;
-    m_nSampleCount = 0;
-}
+//    }
+//    av_free_packet(pVideoPacket);
+
+//    pthread_mutex_unlock(&lockdecode);
+//    return true;
+//}
 
 

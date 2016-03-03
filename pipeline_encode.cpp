@@ -379,6 +379,27 @@ mfxStatus CEncodingPipeline::AllocAndInitVppDoNotUse()
 
 } // CEncodingPipeline::AllocAndInitVppDoNotUse()
 
+mfxStatus CEncodingPipeline::AllocAndInitVppDoUse()
+{
+    memset(&m_deinterlaceConfig, 0, sizeof(m_deinterlaceConfig));
+    m_deinterlaceConfig.Header.BufferId = MFX_EXTBUFF_VPP_DEINTERLACING;
+    m_deinterlaceConfig.Header.BufferSz = sizeof(mfxExtVPPDeinterlacing);
+    m_deinterlaceConfig.Mode = MFX_DEINTERLACING_BOB;
+
+    memset(&m_VppDoUse, 0, sizeof(m_VppDoUse));
+    m_VppDoUse.Header.BufferId = MFX_EXTBUFF_VPP_DOUSE;
+    m_VppDoUse.Header.BufferSz = sizeof(mfxExtVPPDoUse);
+    m_VppDoUse.AlgList = new mfxU32 [m_VppDoUse.NumAlg];
+
+    m_VppDoUse.NumAlg = 1;
+    MSDK_CHECK_POINTER(m_VppDoUse.AlgList,  MFX_ERR_MEMORY_ALLOC);
+
+    m_VppDoUse.AlgList[0] = MFX_EXTBUFF_VPP_DEINTERLACING;
+
+    return MFX_ERR_NONE;
+
+}
+
 void CEncodingPipeline::FreeMVCSeqDesc()
 {
     MSDK_SAFE_DELETE_ARRAY(m_MVCSeqDesc.View);
@@ -396,8 +417,8 @@ mfxStatus CEncodingPipeline::InitMfxEncParams(sParams *pInParams)
 {
     m_MfxEncParams.mfx.CodecLevel = pInParams->nCodecLevel;
     m_MfxEncParams.mfx.CodecProfile = pInParams->nCodecProfile;
-//    m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;// pInParams->nPicStruct;
-    m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_FIELD_TFF;
+    m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;// pInParams->nPicStruct;
+//    m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_FIELD_TFF;
     m_MfxEncParams.mfx.RateControlMethod = pInParams->nRateControlMethod;
     m_MfxEncParams.mfx.GopPicSize = pInParams->nGopPicSize;
     m_MfxEncParams.mfx.GopRefDist = pInParams->nGopRefDist;
@@ -483,6 +504,11 @@ mfxStatus CEncodingPipeline::InitMfxEncParams(sParams *pInParams)
         m_MfxEncParams.mfx.CodecProfile = MFX_PROFILE_AVC_STEREO_HIGH;
     }
 
+//    AllocAndInitVppDoUse();
+////    m_VppExtParams.push_back((mfxExtBuffer *)&m_VppDoNotUse);
+
+//    m_EncExtParams.push_back((mfxExtBuffer *)&m_VppDoUse);
+//    m_EncExtParams.push_back((mfxExtBuffer *)&m_deinterlaceConfig);
     // configure and attach external parameters
     if (MVC_ENABLED & pInParams->MVC_flags)
         m_EncExtParams.push_back((mfxExtBuffer *)&m_MVCSeqDesc);
@@ -534,8 +560,8 @@ mfxStatus CEncodingPipeline::InitMfxVppParams(sParams *pInParams)
     // input frame info
     m_mfxVppParams.vpp.In.FourCC    = MFX_FOURCC_NV12;
 //    m_mfxVppParams.vpp.In.FourCC    = MFX_FOURCC_YV12;
-    m_mfxVppParams.vpp.In.PicStruct = pInParams->nPicStruct;
-//    m_mfxVppParams.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
+    m_mfxVppParams.vpp.In.PicStruct = MFX_PICSTRUCT_FIELD_TFF;
+
     ConvertFrameRate(pInParams->dFrameRate, &m_mfxVppParams.vpp.In.FrameRateExtN, &m_mfxVppParams.vpp.In.FrameRateExtD);
 
     // width must be a multiple of 16
@@ -548,7 +574,6 @@ mfxStatus CEncodingPipeline::InitMfxVppParams(sParams *pInParams)
     // VPP itself ignores crops at initialization
     m_mfxVppParams.vpp.In.CropW = pInParams->nWidth;
     m_mfxVppParams.vpp.In.CropH = pInParams->nHeight;
-
     // fill output frame info
     MSDK_MEMCPY_VAR(m_mfxVppParams.vpp.Out,&m_mfxVppParams.vpp.In, sizeof(mfxFrameInfo));
 
@@ -558,14 +583,18 @@ mfxStatus CEncodingPipeline::InitMfxVppParams(sParams *pInParams)
                 MSDK_ALIGN16(pInParams->nDstHeight) : MSDK_ALIGN32(pInParams->nDstHeight);
 
     // configure and attach external parameters
-    AllocAndInitVppDoNotUse();
-    m_VppExtParams.push_back((mfxExtBuffer *)&m_VppDoNotUse);
+    AllocAndInitVppDoUse();
+//    m_VppExtParams.push_back((mfxExtBuffer *)&m_VppDoNotUse);
 
-    if (MVC_ENABLED & pInParams->MVC_flags)
-        m_VppExtParams.push_back((mfxExtBuffer *)&m_MVCSeqDesc);
+    m_VppExtParams.push_back((mfxExtBuffer *)&m_VppDoUse);
+    m_VppExtParams.push_back((mfxExtBuffer *)&m_deinterlaceConfig);
+
+//    if (MVC_ENABLED & pInParams->MVC_flags)
+//        m_VppExtParams.push_back((mfxExtBuffer *)&m_MVCSeqDesc);
 
     m_mfxVppParams.ExtParam = &m_VppExtParams[0]; // vector is stored linearly in memory
     m_mfxVppParams.NumExtParam = (mfxU16)m_VppExtParams.size();
+    m_mfxVppParams.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
 
     m_mfxVppParams.AsyncDepth = pInParams->nAsyncDepth;
     return MFX_ERR_NONE;
@@ -584,39 +613,39 @@ mfxStatus CEncodingPipeline::CreateHWDevice()
     return MFX_ERR_NONE;
 }
 
-bool CEncodingPipeline::GetBuffer( PSAMPLE pSample )
-{
-    if( NULL == m_pLoopListBuffer )
-        return false;
-    return m_pLoopListBuffer->Get( pSample );
-}
+//bool CEncodingPipeline::GetBuffer( PSAMPLE pSample )
+//{
+//    if( NULL == m_pLoopListBuffer )
+//        return false;
+//    return m_pLoopListBuffer->Get( pSample );
+//}
 
-int CEncodingPipeline::GetSampleCount()
-{
-    if( m_pLoopListBuffer )
-        return m_pLoopListBuffer->GetSampleCount();
-    return 0;
-}
+//int CEncodingPipeline::GetSampleCount()
+//{
+//    if( m_pLoopListBuffer )
+//        return m_pLoopListBuffer->GetSampleCount();
+//    return 0;
+//}
 
-bool CEncodingPipeline::GetTimeStamp(unsigned long &lTimeStamp)
-{
-    bool bRet = false;
-    if( NULL == m_pLoopListBuffer )
-        return bRet;
+//bool CEncodingPipeline::GetTimeStamp(unsigned long &lTimeStamp)
+//{
+//    bool bRet = false;
+//    if( NULL == m_pLoopListBuffer )
+//        return bRet;
 
-    PSAMPLE pSample = (PSAMPLE)new BYTE[8+4096*1024];
-    if( NULL == pSample )
-        return bRet;
+//    PSAMPLE pSample = (PSAMPLE)new BYTE[8+4096*1024];
+//    if( NULL == pSample )
+//        return bRet;
 
-    if( m_pLoopListBuffer->Get( pSample, false ) )
-    {
-        lTimeStamp = pSample->lTimeStamp;
-        bRet = true;
-    }
-    delete pSample;
-    pSample = NULL;
-    return bRet;
-}
+//    if( m_pLoopListBuffer->Get( pSample, false ) )
+//    {
+//        lTimeStamp = pSample->lTimeStamp;
+//        bRet = true;
+//    }
+//    delete pSample;
+//    pSample = NULL;
+//    return bRet;
+//}
 
 long long CEncodingPipeline::GetBitRate()
 {
@@ -660,11 +689,11 @@ void CEncodingPipeline::SetDelay(int Time)
     TimeDelay = Time;
 }
 
-void CEncodingPipeline::ClearVideoBuffer()
-{
-    if( m_pLoopListBuffer )
-        m_pLoopListBuffer->ClearBuffer();
-}
+//void CEncodingPipeline::ClearVideoBuffer()
+//{
+//    if( m_pLoopListBuffer )
+//        m_pLoopListBuffer->ClearBuffer();
+//}
 
 void CEncodingPipeline::Quit()
 {
@@ -856,6 +885,7 @@ CEncodingPipeline::CEncodingPipeline()
     frame = 1;
     BitrateBefore = 0;
     memset(&m_EncodeCtrl, 0, sizeof(mfxEncodeCtrl));
+    m_bUseVPP = true;
     m_pMfxENC = NULL;
     m_pMfxVPP = NULL;
     m_pMFXAllocator = NULL;
@@ -880,9 +910,13 @@ CEncodingPipeline::CEncodingPipeline()
     m_MVCSeqDesc.Header.BufferId = MFX_EXTBUFF_MVC_SEQ_DESC;
     m_MVCSeqDesc.Header.BufferSz = sizeof(m_MVCSeqDesc);
 
-    MSDK_ZERO_MEMORY(m_VppDoNotUse);
-    m_VppDoNotUse.Header.BufferId = MFX_EXTBUFF_VPP_DONOTUSE;
-    m_VppDoNotUse.Header.BufferSz = sizeof(m_VppDoNotUse);
+//    MSDK_ZERO_MEMORY(m_VppDoNotUse);
+//    m_VppDoNotUse.Header.BufferId = MFX_EXTBUFF_VPP_DONOTUSE;
+//    m_VppDoNotUse.Header.BufferSz = sizeof(m_VppDoNotUse);
+
+    MSDK_ZERO_MEMORY(m_VppDoUse);
+    m_VppDoUse.Header.BufferId = MFX_EXTBUFF_VPP_DOUSE;
+    m_VppDoUse.Header.BufferSz = sizeof(m_VppDoUse);
 
     MSDK_ZERO_MEMORY(m_CodingOption);
     m_CodingOption.Header.BufferId = MFX_EXTBUFF_CODING_OPTION;
@@ -945,7 +979,7 @@ mfxStatus CEncodingPipeline::InitSaveBuffer(  )
 //        long lPitch  = ((nW &~ 15) * 12+ 7) / 8;
 //        long lHeight = (nH + 31) &~ 31;
         m_pLoopListBuffer = send_Buffer[m_deviceid];
-        //m_pLoopListBuffer  = new CLoopListBuffer(lPitch*lHeight*2);
+//        m_pLoopListBuffer  = new CLoopListBuffer(lPitch*lHeight*2);
 //        if(m_deviceid == 0)
 //        {
 //            FILE *fpVideo = fopen("cctv0.264", "wa+");
@@ -956,6 +990,7 @@ mfxStatus CEncodingPipeline::InitSaveBuffer(  )
     if( NULL == m_pSample )
     {
         m_pSample = (PSAMPLE)new BYTE[8+4096*1024];
+//        m_pSample = (PSAMPLE)new BYTE[1];
         MSDK_CHECK_POINTER(m_pSample, MFX_ERR_MEMORY_ALLOC);
     }
 
@@ -1013,7 +1048,8 @@ mfxStatus CEncodingPipeline::Init( sParams *pParams )
     // or if different FourCC is set in InitMfxVppParams
     if (pParams->nWidth  != pParams->nDstWidth ||
             pParams->nHeight != pParams->nDstHeight ||
-            m_mfxVppParams.vpp.In.FourCC != m_mfxVppParams.vpp.Out.FourCC)
+            m_mfxVppParams.vpp.In.FourCC != m_mfxVppParams.vpp.Out.FourCC ||
+            m_mfxVppParams.vpp.In.PicStruct != m_mfxVppParams.vpp.Out.PicStruct)
     {
         m_pMfxVPP = new MFXVideoVPP(m_mfxSession);
         MSDK_CHECK_POINTER(m_pMfxVPP, MFX_ERR_MEMORY_ALLOC);
@@ -1479,6 +1515,7 @@ mfxStatus CEncodingPipeline::Run()
             bVppMultipleOutput = false; // reset the flag before a call to VPP
             for (;;)
             {
+//                printf("/*vpp wor*/k.................................\n");
                 sts = m_pMfxVPP->RunFrameVPPAsync(&m_pVppSurfaces[nVppSurfIdx], &m_pEncSurfaces[nEncSurfIdx],
                                                   NULL, &VppSyncPoint);
 

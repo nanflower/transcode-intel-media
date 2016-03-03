@@ -10,20 +10,20 @@
 #include "values.h"
 #include <QFont>
 
-extern transcodepool *g_pCaptureDeviceVec[DEVICE_NUM];
+//extern transcodepool *g_pCaptureDeviceVec[DEVICE_NUM];
 extern outudppool *send_Buffer[16];
 extern decodepool *decode_Buffer[16];
 extern transcodepool *transcode_Buffer[16];
 //extern CUDPTrans *g_pUDPServer;
 
 
-extern RESOLUTION g_enuResolution;
-extern char* g_pNoSignal1280;
-extern char* g_pNoSignal1920;
-extern char* g_pUnmatchedSignal1280;
-extern char* g_pUnmatchedSignal1920;
+//extern RESOLUTION g_enuResolution;
+//extern char* g_pNoSignal1280;
+//extern char* g_pNoSignal1920;
+//extern char* g_pUnmatchedSignal1280;
+//extern char* g_pUnmatchedSignal1920;
 
-extern unsigned long g_CapCardPcr;
+//extern unsigned long g_CapCardPcr;
 
-extern void HandleLongString( QString& longStr, int nWidth, const QFont& font );
+//extern void HandleLongString( QString& longStr, int nWidth, const QFont& font );
 #endif // __GLOBAL_H__

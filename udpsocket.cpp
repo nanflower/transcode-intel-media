@@ -105,6 +105,9 @@ int read_data(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue( buf, size);
+        if(ret == 1){
+            usleep(10000);
+        }
     } while (ret);
 
     return size;
@@ -117,6 +120,8 @@ int read_data1(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue1( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -129,6 +134,8 @@ int read_data2(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue2( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -141,6 +148,8 @@ int read_data3(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue3( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -153,6 +162,8 @@ int read_data4(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue4( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -165,6 +176,8 @@ int read_data5(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue5( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -177,6 +190,8 @@ int read_data6(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue6( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -189,6 +204,8 @@ int read_data7(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue7( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -201,6 +218,8 @@ int read_data8(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue8( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -213,6 +232,8 @@ int read_data9(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue9( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -225,6 +246,8 @@ int read_data10(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue10( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -237,6 +260,8 @@ int read_data11(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue11( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -249,6 +274,8 @@ int read_data12(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue12( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -261,6 +288,8 @@ int read_data13(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue13( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -273,6 +302,8 @@ int read_data14(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue14( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -285,6 +316,8 @@ int read_data15(void *opaque, uint8_t *buf, int buf_size) {
     bool ret;
     do {
         ret = pTemp->get_queue15( buf, size);
+        if(ret == 1)
+            usleep(10000);
     } while (ret);
 
     return size;
@@ -294,85 +327,85 @@ udpsocket::udpsocket()
 {
     bitratebefore = 0;
     curbitrate = 0;
-    bufsize = 1024*1024;
+    bufsize = 1024*512;
 
     pthread_mutex_init(&locker, NULL);
-    q_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr = 0;
     read_ptr = 0;
 
     pthread_mutex_init(&locker1, NULL);
-    q_buf1 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf1 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr1 = 0;
     read_ptr1 = 0;
 
     pthread_mutex_init(&locker2, NULL);
-    q_buf2 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf2 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr2 = 0;
     read_ptr2 = 0;
 
     pthread_mutex_init(&locker3, NULL);
-    q_buf3 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf3 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr3 = 0;
     read_ptr3 = 0;
 
     pthread_mutex_init(&locker4, NULL);
-    q_buf4 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf4 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr4 = 0;
     read_ptr4 = 0;
 
     pthread_mutex_init(&locker5, NULL);
-    q_buf5 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf5 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr5 = 0;
     read_ptr5 = 0;
 
     pthread_mutex_init(&locker6, NULL);
-    q_buf6 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf6 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr6 = 0;
     read_ptr6 = 0;
 
     pthread_mutex_init(&locker7, NULL);
-    q_buf7 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf7 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr7 = 0;
     read_ptr7 = 0;
 
     pthread_mutex_init(&locker8, NULL);
-    q_buf8 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf8 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr8 = 0;
     read_ptr8 = 0;
 
     pthread_mutex_init(&locker9, NULL);
-    q_buf9 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf9 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr9 = 0;
     read_ptr9 = 0;
 
     pthread_mutex_init(&locker10, NULL);
-    q_buf10 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf10 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr10 = 0;
     read_ptr10 = 0;
 
     pthread_mutex_init(&locker11, NULL);
-    q_buf11 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf11 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr11 = 0;
     read_ptr11 = 0;
 
     pthread_mutex_init(&locker12, NULL);
-    q_buf12 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf12 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr12 = 0;
     read_ptr12 = 0;
 
     pthread_mutex_init(&locker13, NULL);
-    q_buf13 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf13 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr13 = 0;
     read_ptr13 = 0;
 
     pthread_mutex_init(&locker14, NULL);
-    q_buf14 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf14 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr14 = 0;
     read_ptr14 = 0;
 
     pthread_mutex_init(&locker15, NULL);
-    q_buf15 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*1024);
+    q_buf15 = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr15 = 0;
     read_ptr15 = 0;
 
@@ -490,7 +523,7 @@ void *udpsocket::ts_demuxer(void *pArg)
 {
     udpsocket* pTemp = (udpsocket*) pArg;
     if( pTemp )
-        pTemp->ts_demux(1);
+        pTemp->ts_demux();
     //    pTemp->thread_test();
     return (void*)NULL;
 }
@@ -571,7 +604,7 @@ void udpsocket::run_udp_send(){
     }
 }
 
-int udpsocket::ts_demux(int index)
+int udpsocket::ts_demux()
 {
     AVCodec *pAudioCodec[AUDIO_NUM];
     AVCodecContext *pAudioCodecCtx[AUDIO_NUM];
@@ -656,7 +689,7 @@ int udpsocket::ts_demux(int index)
         pb = avio_alloc_context(buffer, BUF_SIZE, 0, NULL, read_data14, NULL, NULL);
     else if(protindex == 16)
         pb = avio_alloc_context(buffer, BUF_SIZE, 0, NULL, read_data15, NULL, NULL);
-    printf("thread %d pid %lu tid %lu\n",index,(unsigned long)getpid(),(unsigned long)pthread_self());
+//    printf("thread %d pid %lu tid %lu\n",index,(unsigned long)getpid(),(unsigned long)pthread_self());
 
     if (!pb) {
         fprintf(stderr, "avio alloc failed!\n");
@@ -671,7 +704,7 @@ int udpsocket::ts_demux(int index)
     }
     pFmt = avformat_alloc_context();
     pFmt->pb = pb;
-    printf("demux work1\n");
+//    printf("demux work1\n");
     if (avformat_open_input(&pFmt, "", piFmt, NULL) < 0) {
         fprintf(stderr, "avformat open failed.\n");
         return -1;
@@ -685,7 +718,7 @@ int udpsocket::ts_demux(int index)
         fprintf(stderr, "could not fine stream.\n");
         return -1;
     }
-    printf("dump format\n");
+//    printf("dump format\n");
     av_dump_format(pFmt, 0, "", 0);
 
     int videox = 0,audiox = 0;
@@ -795,7 +828,7 @@ int udpsocket::ts_demux(int index)
     /** Initialize the resampler to be able to convert audio sample formats. */
 //    if (init_resampler(pAudioCodecCtx[0], AudioEncodeCtx[0],
 //                       &resample_context))
-    for(int i=0; i<1; i++){
+    for(int i=0; i<AUDIO_NUM; i++){
         printf(" samplerate input = %d , samplerate output = %d\n",pAudioCodecCtx[i]->sample_rate, AudioEncodeCtx[i]->sample_rate);
         resample_context[i] = swr_alloc_set_opts(NULL, av_get_default_channel_layout(AudioEncodeCtx[i]->channels),
                                                           AudioEncodeCtx[i]->sample_fmt,
@@ -812,21 +845,18 @@ int udpsocket::ts_demux(int index)
             return -1;
         }
     }
-    printf("swr over\n");
+//    printf("swr over\n");
     uint8_t *converted_input_samples = NULL;
     converted_input_samples = (uint8_t *)calloc(AudioEncodeCtx[0]->channels, sizeof(*converted_input_samples));
 
     while(1) {
         if (av_read_frame(pFmt, &pkt) >= 0) {
-            for( int i=0; i<1; i++ ){
+            for( int i=0; i<VIDEO_NUM; i++ ){
                 if (pkt.stream_index == videoindex[i]) {
                     decode_Buffer[protindex-1]->putbuffer(&pkt);
-
                  }else if (pkt.stream_index == audioindex[i]) {
                     pAudioframe[i] = av_frame_alloc();
                     if (avcodec_decode_audio4(pAudioCodecCtx[i], pAudioframe[i], &frame_size, &pkt) >= 0) {
-                        if (i == 0){
-
                             av_samples_alloc(&converted_input_samples, NULL, AudioEncodeCtx[i]->channels, pAudioframe[i]->nb_samples, AudioEncodeCtx[i]->sample_fmt, 0);
                             int error = 0;
                             if((error = swr_convert(resample_context[i], &converted_input_samples, pAudioframe[i]->nb_samples,
@@ -865,7 +895,6 @@ int udpsocket::ts_demux(int index)
                             }
                             av_freep(&converted_input_samples);
 //                            av_free(&converted_input_samples);
-                        }
                     }
                     av_frame_free(&pAudioframe[0]);
                 }
@@ -933,7 +962,7 @@ void udpsocket::udp_ts_recv(void)
 //         struct sockaddr_in client_addr;
 //         socklen_t client_addr_length = sizeof(client_addr);
 //         /* 接收数据 */
-//         uint8_t buffer[BUF_SIZE];
+//        uint8_t buffer[BUF_SIZE];
          bzero(buffer, BUF_SIZE);
          struct timeval tv;
          fd_set readfds;
@@ -945,6 +974,7 @@ void udpsocket::udp_ts_recv(void)
          if (FD_ISSET(server_socket_fd,&readfds))
          {
              int len = recvfrom(server_socket_fd, buffer, BUF_SIZE,0,(struct sockaddr*)&client_addr, &client_addr_length);
+//             printf("recv length = %d \n",len);
              if (len == -1)
              {
                  printf("received data error!\n");
@@ -995,19 +1025,6 @@ void udpsocket::udp_ts_recv(void)
      //printf("%s\n", file_name);
     }
 }
-
-
-//int udpsocket::read_data(void *opaque, uint8_t *buf, int buf_size) {
-
-//    udpsocket* pTemp = (udpsocket*)opaque;
-//    int size = buf_size;
-//    bool ret;
-//    do {
-//        ret = pTemp->get_queue( buf, size);
-//    } while (ret);
-
-//    return size;
-//}
 
 void udpsocket::put_queue(unsigned char* buf, int size) {
     pthread_mutex_lock(&locker);
