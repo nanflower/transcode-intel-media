@@ -384,17 +384,33 @@ mfxStatus CEncodingPipeline::AllocAndInitVppDoUse()
     memset(&m_deinterlaceConfig, 0, sizeof(m_deinterlaceConfig));
     m_deinterlaceConfig.Header.BufferId = MFX_EXTBUFF_VPP_DEINTERLACING;
     m_deinterlaceConfig.Header.BufferSz = sizeof(mfxExtVPPDeinterlacing);
-    m_deinterlaceConfig.Mode = MFX_DEINTERLACING_BOB;
+    m_deinterlaceConfig.Mode = MFX_DEINTERLACING_ADVANCED;//BOB
+
+    if(FrameRateUse){
+        memset(&m_FrameRateConversion, 0, sizeof(m_FrameRateConversion));
+        m_FrameRateConversion.Header.BufferId = MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION;
+        m_FrameRateConversion.Header.BufferSz = sizeof(mfxExtVPPFrameRateConversion);
+        m_FrameRateConversion.Algorithm = MFX_FRCALGM_FRAME_INTERPOLATION;
+    }
 
     memset(&m_VppDoUse, 0, sizeof(m_VppDoUse));
     m_VppDoUse.Header.BufferId = MFX_EXTBUFF_VPP_DOUSE;
     m_VppDoUse.Header.BufferSz = sizeof(mfxExtVPPDoUse);
     m_VppDoUse.AlgList = new mfxU32 [m_VppDoUse.NumAlg];
 
-    m_VppDoUse.NumAlg = 1;
-    MSDK_CHECK_POINTER(m_VppDoUse.AlgList,  MFX_ERR_MEMORY_ALLOC);
+    if(FrameRateUse){
+        m_VppDoUse.NumAlg = 2;
+        MSDK_CHECK_POINTER(m_VppDoUse.AlgList,  MFX_ERR_MEMORY_ALLOC);
 
-    m_VppDoUse.AlgList[0] = MFX_EXTBUFF_VPP_DEINTERLACING;
+        m_VppDoUse.AlgList[0] = MFX_EXTBUFF_VPP_DEINTERLACING;
+        m_VppDoUse.AlgList[1] = MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION;
+    }
+    else{
+        m_VppDoUse.NumAlg = 1;
+        MSDK_CHECK_POINTER(m_VppDoUse.AlgList,  MFX_ERR_MEMORY_ALLOC);
+
+        m_VppDoUse.AlgList[0] = MFX_EXTBUFF_VPP_DEINTERLACING;
+    }
 
     return MFX_ERR_NONE;
 
@@ -418,6 +434,7 @@ mfxStatus CEncodingPipeline::InitMfxEncParams(sParams *pInParams)
     m_MfxEncParams.mfx.CodecLevel = pInParams->nCodecLevel;
     m_MfxEncParams.mfx.CodecProfile = pInParams->nCodecProfile;
     m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;// pInParams->nPicStruct;
+//    m_MfxEncParams.mfx.FrameInfo.FrameRateExtN = 50;
 //    m_MfxEncParams.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_FIELD_TFF;
     m_MfxEncParams.mfx.RateControlMethod = pInParams->nRateControlMethod;
     m_MfxEncParams.mfx.GopPicSize = pInParams->nGopPicSize;
@@ -476,7 +493,8 @@ mfxStatus CEncodingPipeline::InitMfxEncParams(sParams *pInParams)
     m_MfxEncParams.mfx.CodecId  = pInParams->CodecId;
     ConvertFrameRate(pInParams->dFrameRate, &m_MfxEncParams.mfx.FrameInfo.FrameRateExtN, &m_MfxEncParams.mfx.FrameInfo.FrameRateExtD);
     m_MfxEncParams.mfx.EncodedOrder  = 0; // binary flag, 0 signals encoder to take frames in display order
-
+//    m_MfxEncParams.mfx.FrameInfo.FrameRateExtN = 25;
+//    m_MfxEncParams.mfx.FrameInfo.FrameRateExtD = 1;
     // specify memory type
     m_MfxEncParams.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
 
@@ -594,6 +612,12 @@ mfxStatus CEncodingPipeline::InitMfxVppParams(sParams *pInParams)
 
     m_mfxVppParams.ExtParam = &m_VppExtParams[0]; // vector is stored linearly in memory
     m_mfxVppParams.NumExtParam = (mfxU16)m_VppExtParams.size();
+    if(FrameRateUse){
+        m_mfxVppParams.vpp.In.FrameRateExtN = 25;
+        m_mfxVppParams.vpp.In.FrameRateExtD = 1;
+        m_mfxVppParams.vpp.Out.FrameRateExtN = 50;
+        m_mfxVppParams.vpp.Out.FrameRateExtD = 1;
+    }
     m_mfxVppParams.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
 
     m_mfxVppParams.AsyncDepth = pInParams->nAsyncDepth;
@@ -886,6 +910,7 @@ CEncodingPipeline::CEncodingPipeline()
     BitrateBefore = 0;
     memset(&m_EncodeCtrl, 0, sizeof(mfxEncodeCtrl));
     m_bUseVPP = true;
+    FrameRateUse = false;
     m_pMfxENC = NULL;
     m_pMfxVPP = NULL;
     m_pMFXAllocator = NULL;

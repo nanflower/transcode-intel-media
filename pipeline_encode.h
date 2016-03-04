@@ -167,6 +167,8 @@ protected:
 
     mfxExtVPPDoUse m_VppDoUse;
     mfxExtVPPDeinterlacing m_deinterlaceConfig;
+    mfxExtVPPFrameRateConversion m_FrameRateConversion;
+    bool    FrameRateUse;
 
     // for disabling VPP algorithms
     mfxExtVPPDoNotUse m_VppDoNotUse;

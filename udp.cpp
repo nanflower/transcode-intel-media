@@ -5,6 +5,7 @@ FILE *m_write1;
 FILE *m_writeframe;
 #define ChannelNum 16
 #define MaxChannel 16
+#define FrameRate 25
 
 udp::udp()
 {
@@ -94,7 +95,7 @@ int udp::Init()
                     RealBitrateCount1 += BitrateAv1[i];
                     BitrateCount += Bitrate[i];
                 }
-                sprintf(str, "%lld", RealBitrateCount*25);
+                sprintf(str, "%lld", RealBitrateCount*FrameRate);
                 fputs(str, m_write);
                 fputc('\r', m_write);
                 fputc('\n', m_write);
@@ -102,10 +103,10 @@ int udp::Init()
                 fputs(str2, m_writeframe);
                 fputc('\r', m_writeframe);
                 fputc('\n', m_writeframe);
-                qpi = 54 - (int)(((long double)log((long double)RealBitrateCount1*25)-19.8991)/(-0.1213));
-                qpi1 = 54 - (int)(((long double)log((long double)RealBitrateCount*25)-19.8991)/(-0.1213));
+                qpi = 54 - (int)(((long double)log((long double)RealBitrateCount1*FrameRate)-19.8991)/(-0.1213));
+                qpi1 = 54 - (int)(((long double)log((long double)RealBitrateCount*FrameRate)-19.8991)/(-0.1213));
 //                printf("frame = %lld , %lld , %lld ,%lld , %lld , %lld \n",Number[0], Number[1], Number[2], Number[5], Number[9],Number[12]);
-                printf("frame = %lld ,count = %lld, qpi = %d, qpi1 = %d\n",Number[0], RealBitrateCount*25, qpi , qpi1);
+                printf("frame = %lld ,count = %lld, qpi = %d, qpi1 = %d\n",Number[0], RealBitrateCount*FrameRate, qpi , qpi1);
                 if(qpi1 > qpi)
                     qpi = qpi1;
 //                if(qpi > 24)
@@ -127,9 +128,10 @@ int udp::Init()
 //                        }
 //                        else
                         qp[i] = qpi;
-                        if(Bitrate[i]*25>1200000 && BitrateCount>15000000)
+                        if(Bitrate[i]*FrameRate>1200000 && BitrateCount>15000000)
                             qp[i] += 1;
                         m_ChannelGet[i]->SetQP(qp[i]);
+//                        m_ChannelGet[i]->SetQP(25);
                     }
                     sprintf(str1, "%d", qpi*100000);
                     fputs(str1, m_write1);
