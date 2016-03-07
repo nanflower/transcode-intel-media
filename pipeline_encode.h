@@ -166,6 +166,7 @@ protected:
     mfxU32 m_nNumView;
 
     mfxExtVPPDoUse m_VppDoUse;
+    mfxExtVPPDenoise m_denoise;
     mfxExtVPPDeinterlacing m_deinterlaceConfig;
     mfxExtVPPFrameRateConversion m_FrameRateConversion;
     bool    FrameRateUse;

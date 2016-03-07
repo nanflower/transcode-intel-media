@@ -3,6 +3,28 @@
 FILE *m_write;
 FILE *m_write1;
 FILE *m_writeframe;
+
+FILE *m_bit1;
+FILE *m_qp1;
+FILE *m_frame1;
+FILE *m_bit2;
+FILE *m_qp2;
+FILE *m_frame2;
+FILE *m_bit3;
+FILE *m_qp3;
+FILE *m_frame3;
+FILE *m_bit4;
+FILE *m_qp4;
+FILE *m_frame4;
+FILE *m_bit5;
+FILE *m_qp5;
+FILE *m_frame5;
+FILE *m_bit6;
+FILE *m_qp6;
+FILE *m_frame6;
+FILE *m_bit7;
+FILE *m_qp7;
+FILE *m_frame7;
 #define ChannelNum 16
 #define MaxChannel 16
 #define FrameRate 25
@@ -22,6 +44,28 @@ int udp::Init()
         m_write = fopen("real16.txt", "wb+");
         m_write1 = fopen("qp.txt", "wb+");
         m_writeframe = fopen("frame.txt", "wb+");
+
+        m_bit1 = fopen("m-real1.txt", "wb+");
+        m_qp1 = fopen("m-qp1.txt","wb+");
+        m_frame1 = fopen("m-frame1.txt","wb+");
+        m_bit2 = fopen("m-real2.txt", "wb+");
+        m_qp2 = fopen("m-qp2.txt","wb+");
+        m_frame2 = fopen("m-frame2.txt","wb+");
+        m_bit3 = fopen("m-real3.txt", "wb+");
+        m_qp3 = fopen("m-qp3.txt","wb+");
+        m_frame3 = fopen("m-frame3.txt","wb+");
+        m_bit4 = fopen("m-real4.txt", "wb+");
+        m_qp4 = fopen("m-qp4.txt","wb+");
+        m_frame4 = fopen("m-frame4.txt","wb+");
+        m_bit5 = fopen("m-real5.txt", "wb+");
+        m_qp5 = fopen("m-qp5.txt","wb+");
+        m_frame5 = fopen("m-frame5.txt","wb+");
+        m_bit6 = fopen("m-real6.txt", "wb+");
+        m_qp6 = fopen("m-qp6.txt","wb+");
+        m_frame6 = fopen("m-frame6.txt","wb+");
+        m_bit7 = fopen("m-real7.txt", "wb+");
+        m_qp7 = fopen("m-qp7.txt","wb+");
+        m_frame7 = fopen("m-frame7.txt","wb+");
 
         for(int i=0; i<ChannelNum; i++){
             m_ChannelGet[i] = new udpsocket();
@@ -69,6 +113,18 @@ int udp::Init()
                     BitrateAv1[0] -= RealBitrate1[0][(NumberBefore[0]+i+1)%AverageNum1]/AverageNum1;
                     RealBitrate1[0][(NumberBefore[0]+i+1)%AverageNum1] = Bitrate[0];
                 }
+                sprintf(str, "%lld", BitrateAv[0]*FrameRate);
+                fputs(str, m_bit1);
+                fputc('\r', m_bit1);
+                fputc('\n', m_bit1);
+                sprintf(str, "%d", qp[0]*100000);
+                fputs(str, m_qp1);
+                fputc('\r', m_qp1);
+                fputc('\n', m_qp1);
+                sprintf(str, "%lld", Number[0]);
+                fputs(str, m_frame1);
+                fputc('\r', m_frame1);
+                fputc('\n', m_frame1);
                 RealBitrateCount += BitrateAv[0];
                 RealBitrateCount1 += BitrateAv1[0];
                 NumberBefore[0] = Number[0];
@@ -90,6 +146,90 @@ int udp::Init()
                             RealBitrate1[i][(NumberBefore[i]+j+1)%AverageNum1] = Bitrate[i];
                         }
                         NumberBefore[i] = Number[i];
+                    }
+                    if(i == 2){
+                        sprintf(str, "%lld", BitrateAv[i]*FrameRate);
+                        fputs(str, m_bit2);
+                        fputc('\r', m_bit2);
+                        fputc('\n', m_bit2);
+                        sprintf(str, "%d", qp[i]*100000);
+                        fputs(str, m_qp2);
+                        fputc('\r', m_qp2);
+                        fputc('\n', m_qp2);
+                        sprintf(str, "%lld", Number[i]);
+                        fputs(str, m_frame2);
+                        fputc('\r', m_frame2);
+                        fputc('\n', m_frame2);
+                    }
+                    else if(i == 3){
+                        sprintf(str, "%lld", BitrateAv[i]*FrameRate);
+                        fputs(str, m_bit3);
+                        fputc('\r', m_bit3);
+                        fputc('\n', m_bit3);
+                        sprintf(str, "%d", qp[i]*100000);
+                        fputs(str, m_qp3);
+                        fputc('\r', m_qp3);
+                        fputc('\n', m_qp3);
+                        sprintf(str, "%lld", Number[i]);
+                        fputs(str, m_frame3);
+                        fputc('\r', m_frame3);
+                        fputc('\n', m_frame3);
+                    }
+                    else if(i == 4){
+                        sprintf(str, "%lld", BitrateAv[i]*FrameRate);
+                        fputs(str, m_bit4);
+                        fputc('\r', m_bit4);
+                        fputc('\n', m_bit4);
+                        sprintf(str, "%d", qp[i]*100000);
+                        fputs(str, m_qp4);
+                        fputc('\r', m_qp4);
+                        fputc('\n', m_qp4);
+                        sprintf(str, "%lld", Number[i]);
+                        fputs(str, m_frame4);
+                        fputc('\r', m_frame4);
+                        fputc('\n', m_frame4);
+                    }
+                    else if(i == 5){
+                        sprintf(str, "%lld", BitrateAv[i]*FrameRate);
+                        fputs(str, m_bit5);
+                        fputc('\r', m_bit5);
+                        fputc('\n', m_bit5);
+                        sprintf(str, "%d", qp[i]*100000);
+                        fputs(str, m_qp5);
+                        fputc('\r', m_qp5);
+                        fputc('\n', m_qp5);
+                        sprintf(str, "%lld", Number[i]);
+                        fputs(str, m_frame5);
+                        fputc('\r', m_frame5);
+                        fputc('\n', m_frame5);
+                    }
+                    else if(i == 6){
+                        sprintf(str, "%lld", BitrateAv[i]*FrameRate);
+                        fputs(str, m_bit6);
+                        fputc('\r', m_bit6);
+                        fputc('\n', m_bit6);
+                        sprintf(str, "%d", qp[i]*100000);
+                        fputs(str, m_qp6);
+                        fputc('\r', m_qp6);
+                        fputc('\n', m_qp6);
+                        sprintf(str, "%lld", Number[i]);
+                        fputs(str, m_frame6);
+                        fputc('\r', m_frame6);
+                        fputc('\n', m_frame6);
+                    }
+                    else if(i == 7){
+                        sprintf(str, "%lld", BitrateAv[i]*FrameRate);
+                        fputs(str, m_bit7);
+                        fputc('\r', m_bit7);
+                        fputc('\n', m_bit7);
+                        sprintf(str, "%d", qp[i]*100000);
+                        fputs(str, m_qp7);
+                        fputc('\r', m_qp7);
+                        fputc('\n', m_qp7);
+                        sprintf(str, "%lld", Number[i]);
+                        fputs(str, m_frame7);
+                        fputc('\r', m_frame7);
+                        fputc('\n', m_frame7);
                     }
                     RealBitrateCount += BitrateAv[i];
                     RealBitrateCount1 += BitrateAv1[i];
@@ -117,16 +257,6 @@ int udp::Init()
                     qpi = 22;
                 if(Number[0] > 100){
                     for(int i=0; i<ChannelNum; i++){
-//                        if(Bitrate[i]*25<500000){
-//                            if(qp[i]>qpi)
-//                                qp[i] = qpi;
-//                        }
-//                        else if(Bitrate[i]*25>1300000 && BitrateCount>15000000){
-//                            qp[i] = qpi + 3;
-//                            if(qp[i] > 40)
-//                                qp[i] = 40;
-//                        }
-//                        else
                         qp[i] = qpi;
                         if(Bitrate[i]*FrameRate>1200000 && BitrateCount>15000000)
                             qp[i] += 1;

@@ -258,7 +258,7 @@ mfxStatus CDecodingPipeline::Init(sInputParams *pParams)
     // Init session
     if (pParams->bUseHWLib) {
         // try searching on all display adapters
-        initPar.Implementation = MFX_IMPL_HARDWARE_ANY;
+        initPar.Implementation = MFX_IMPL_HARDWARE;
 //        initPar.Implementation = MFX_IMPL_HARDWARE;
 //        initPar.Implementation = MFX_IMPL_SOFTWARE;
 //        initPar.Implementation = (initPar.Implementation & !MFX_IMPL_HARDWARE_ANY) | MFX_IMPL_HARDWARE;

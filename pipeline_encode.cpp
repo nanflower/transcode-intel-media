@@ -254,10 +254,10 @@ mfxStatus sTask::WriteBitstream()
     m_pSample->lDecodeTimeStamp = mfxBS.DecodeTimeStamp;
 
 //    if(m_pLoopListBuffer->fpVideo)
-    if(deviceid == 5)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
-    else if(deviceid == 4)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
+//    if(deviceid == 5)
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
+//    else if(deviceid == 4)
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
 //    else if(deviceid == 2)
 //        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v2);
 //    else if(deviceid == 3)
@@ -386,6 +386,11 @@ mfxStatus CEncodingPipeline::AllocAndInitVppDoUse()
     m_deinterlaceConfig.Header.BufferSz = sizeof(mfxExtVPPDeinterlacing);
     m_deinterlaceConfig.Mode = MFX_DEINTERLACING_ADVANCED;//BOB
 
+    memset(&m_denoise, 0, sizeof(m_denoise));
+    m_denoise.Header.BufferId = MFX_EXTBUFF_VPP_DENOISE;
+    m_denoise.Header.BufferSz = sizeof(mfxExtVPPDenoise);
+    m_denoise.DenoiseFactor = 80;
+
     if(FrameRateUse){
         memset(&m_FrameRateConversion, 0, sizeof(m_FrameRateConversion));
         m_FrameRateConversion.Header.BufferId = MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION;
@@ -399,16 +404,18 @@ mfxStatus CEncodingPipeline::AllocAndInitVppDoUse()
     m_VppDoUse.AlgList = new mfxU32 [m_VppDoUse.NumAlg];
 
     if(FrameRateUse){
+        m_VppDoUse.NumAlg = 3;
+        MSDK_CHECK_POINTER(m_VppDoUse.AlgList,  MFX_ERR_MEMORY_ALLOC);
+
+        m_VppDoUse.AlgList[0] = MFX_EXTBUFF_VPP_DENOISE;
+        m_VppDoUse.AlgList[1] = MFX_EXTBUFF_VPP_DEINTERLACING;
+        m_VppDoUse.AlgList[2] = MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION;
+    }
+    else{
         m_VppDoUse.NumAlg = 2;
         MSDK_CHECK_POINTER(m_VppDoUse.AlgList,  MFX_ERR_MEMORY_ALLOC);
 
-        m_VppDoUse.AlgList[0] = MFX_EXTBUFF_VPP_DEINTERLACING;
-        m_VppDoUse.AlgList[1] = MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION;
-    }
-    else{
-        m_VppDoUse.NumAlg = 1;
-        MSDK_CHECK_POINTER(m_VppDoUse.AlgList,  MFX_ERR_MEMORY_ALLOC);
-
+        m_VppDoUse.AlgList[1] = MFX_EXTBUFF_VPP_DENOISE;
         m_VppDoUse.AlgList[0] = MFX_EXTBUFF_VPP_DEINTERLACING;
     }
 
