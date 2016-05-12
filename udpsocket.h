@@ -123,7 +123,7 @@ private:
     int protindex;
     long long bitratebefore;
     long long curbitrate;
-
+    PSAMPLE m_pSample;
 };
 
 #endif // UDPSOCKET_H

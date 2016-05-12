@@ -5,7 +5,7 @@
 #include "decodepool.h"
 #include "transcodepool.h"
 
-outudppool *send_Buffer[16] = {0};
+outudppool *send_Buffer[32] = {0};
 decodepool *decode_Buffer[16] = {0};
 transcodepool *transcode_Buffer[16] = {0};
 

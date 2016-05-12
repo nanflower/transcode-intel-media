@@ -11,7 +11,7 @@
 #include <QFont>
 
 //extern transcodepool *g_pCaptureDeviceVec[DEVICE_NUM];
-extern outudppool *send_Buffer[16];
+extern outudppool *send_Buffer[32];
 extern decodepool *decode_Buffer[16];
 extern transcodepool *transcode_Buffer[16];
 //extern CUDPTrans *g_pUDPServer;

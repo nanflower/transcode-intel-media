@@ -15,13 +15,15 @@ MainWindow::MainWindow(QWidget *parent) :
         if(i < 16)
         {
             //VIDEO 0-15
-            send_Buffer[i] = new outudppool(1);
+            long lPitch  = ((720 &~ 15) * 12+ 7) / 8;
+            long lHeight = (576 + 31) &~ 31;
+            send_Buffer[i] = new outudppool(lPitch*lHeight*2);
             send_Buffer[i]->m_deviceid = i;//2*i+1;
         }
         else
         {
             //AUDIO 16-31
-            send_Buffer[i] = new outudppool(1);
+            send_Buffer[i] = new outudppool();
             send_Buffer[i]->m_deviceid = i;
         }
     }

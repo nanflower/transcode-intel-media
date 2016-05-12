@@ -1,9 +1,13 @@
 #include "one_process.h"
 #include "global.h"
+#include <QDateTime>
+
+const int CONNECT_TIMER = 2000;
 
 one_process::one_process( int index)
 {
 //    g_pCaptureDeviceVec[0]->Init();
+    m_bIsEncoderEnable = false;
     m_index = index;
     m_bStopEncoder = false;
     m_pVideoEncoder = NULL;
@@ -16,6 +20,22 @@ one_process::one_process( int index)
 //    InitDecoderPar();
     pthread_mutex_init( &m_DeMutex, NULL );
     pthread_cond_init( &m_DeCond, NULL );
+
+//    QVector<LOG_INFO>  m_vecSendLog;
+
+    m_pRtmpClient1 = NULL;
+    m_pRtmpClient2 = NULL;
+
+    m_bRtmpEnable1 = true;
+    m_bRtmpEnable2 = true;
+    connect( &m_ConnectRtmpTimer1, SIGNAL(timeout()), this, SLOT(ConnectRtmp1()) );
+    m_ConnectRtmpTimer1.setSingleShot( true );
+    connect( this, SIGNAL(ConnectRtmpTimer1()), this, SLOT(ResponseConnectRtmpTimer1()) );
+    connect( &m_ConnectRtmpTimer2, SIGNAL(timeout()), this, SLOT(ConnectRtmp2()) );
+    m_ConnectRtmpTimer2.setSingleShot( true );
+    connect( this, SIGNAL(ConnectRtmpTimer2()), this, SLOT(ResponseConnectRtmpTimer2()) );
+    m_nRtmpDisconnectTime1 = 0;
+    m_nRtmpDisconnectTime2 = 0;
 }
 
 one_process::~one_process()
@@ -26,6 +46,13 @@ one_process::~one_process()
 
 void one_process::Init(void)
 {
+
+    bool bInitRtmpClient1 = InitRtmpClient1(); // Init rtmp client 1
+    bool bInitRtmpClient2 = InitRtmpClient2();  // Init rtmp client 2
+//    bool bInitUdpRtpClient = InitUdpRtpClient();   // Init udp/rtp client
+    if( !bInitRtmpClient1 && !bInitRtmpClient2 )
+        return ;
+    m_bIsEncoderEnable = true;
 
     pthread_t mpeg2_decode_thread;
     memset( &mpeg2_decode_thread, 0, sizeof( mpeg2_decode_thread ) );
@@ -42,6 +69,15 @@ void one_process::Init(void)
         printf("%s:%d  Error: Create video encoder thread failed !!!\n", __FILE__, __LINE__ );
 
     pthread_detach(h264_encoder_thread);
+
+    pthread_t m_SendRtmpThread;
+    memset( &m_SendRtmpThread, 0, sizeof( m_SendRtmpThread ) );
+
+    if( 0 == m_SendRtmpThread && (bInitRtmpClient1 || bInitRtmpClient2) )
+    {
+        if( 0 != pthread_create( &m_SendRtmpThread, NULL, SendRtmpThread, this ) )
+            printf("%s:%d   Error: Create send thread failed !!!\n", __FILE__, __LINE__ );
+    }
 
 //    pthread_t udp_send_thread;
 //    memset( &udp_send_thread, 0, sizeof( udp_send_thread ) );
@@ -230,6 +266,106 @@ void one_process::run_udp_send(){
     }
 }
 
+void * one_process::SendRtmpThread( void * pArg )
+{
+    one_process* pTemp = (one_process*) pArg;
+    if( pTemp )
+        pTemp->RunSendRtmp();
+    return (void*)NULL;
+}
+
+void one_process::RunSendRtmp()
+{
+    PSAMPLE pVideoSample = (PSAMPLE)new BYTE[8+4096*1024];
+    MSDK_CHECK_POINTER_NO_RET( pVideoSample );
+    MSDK_ZERO_MEMORY( *pVideoSample );
+
+    PSAMPLE pAudioSample = (PSAMPLE)new BYTE[8+4096*10];
+    MSDK_CHECK_POINTER_NO_RET( pAudioSample );
+    MSDK_ZERO_MEMORY( *pAudioSample );
+
+    ULONG lVideoMaxTime = 0;
+    bool bFirstSendRtmp1 = true;
+    bool bFirstSendRtmp2 = true;
+
+    while( m_bIsEncoderEnable )
+    {
+        // -------------------- RTMP1, RTMP2 send ------------------//
+
+//        if( send_Buffer[m_index+16]->Get( pAudioSample ) )
+//        {
+//            if( m_bRtmpEnable1 && m_pRtmpClient1 )
+//            {
+//                printf("rtmp 1 length = %ld, timestamp = %ld \n", pAudioSample->lSampleLength, pAudioSample->lDecodeTimeStamp);
+//                if( 0 == m_pRtmpClient1->Send( pAudioSample->abySample, (int)pAudioSample->lSampleLength, RTMP_PACKET_TYPE_AUDIO, (DWORD)pAudioSample->lTimeStamp ) )
+//                    Rtmp1SendError();
+//                printf("out \n");
+//            }
+
+//            if( m_bRtmpEnable2 && m_pRtmpClient2 )
+//            {
+//                if( 0 == m_pRtmpClient2->Send( pAudioSample->abySample, (int)pAudioSample->lSampleLength, RTMP_PACKET_TYPE_AUDIO, (DWORD)pAudioSample->lTimeStamp ) )
+//                    Rtmp2SendError();
+//            }
+
+            // ----------------- send one video frame --------------------- //
+            if( m_pVideoEncoder && m_pVideoEncoder->GetSampleCount() >= 2 )
+            {
+                if( false == send_Buffer[m_index]->Get( pVideoSample )  )
+                {
+                    printf("%s:%d  Error: Get current video sample failed ,m_index = %d!!!\n", __FILE__, __LINE__,m_index );
+                    break;
+                }
+                // send  video rtmp
+                ULONG lNextTimeStamp = 0;
+                if( m_pVideoEncoder->GetTimeStamp( lNextTimeStamp ) )
+                {
+                    ULONG lCurTimeStamp = pVideoSample->lTimeStamp;
+                    int nVideoTimeStampDelta = m_pVideoEncoder->GetVideoTimeStampDelta();
+                    lVideoMaxTime = ( lCurTimeStamp > lVideoMaxTime ) ? lCurTimeStamp : ( lVideoMaxTime+ nVideoTimeStampDelta );
+                    unsigned int dwVideoDelta = ( lNextTimeStamp < lCurTimeStamp )? (lCurTimeStamp - lNextTimeStamp + nVideoTimeStampDelta) : 0;
+
+                    if( m_bRtmpEnable1 && m_pRtmpClient1 )
+                    {
+                        if( bFirstSendRtmp1 )
+                        {
+                            bFirstSendRtmp1 = false;
+                            unsigned short nWidth, nHeight;
+                            nWidth = 720;
+                            nHeight = 576;
+                            m_pRtmpClient1->SetVideoParam( nWidth, nHeight, 25 );
+                        }
+//                        printf("/*send length*/ = %ld \n",pVideoSample->lSampleLength);
+                        if( 0 == m_pRtmpClient1->Send( pVideoSample->abySample, (int)pVideoSample->lSampleLength, RTMP_PACKET_TYPE_VIDEO, (DWORD)lVideoMaxTime, dwVideoDelta ) )
+                            Rtmp1SendError();
+                    }
+
+                    if( m_bRtmpEnable2 && m_pRtmpClient2 )
+                    {
+                        if( bFirstSendRtmp2 )
+                        {
+                            bFirstSendRtmp2 = false;
+                            unsigned short nWidth, nHeight;
+                            nWidth = 720;
+                            nHeight = 576;
+                            m_pRtmpClient2->SetVideoParam( nWidth, nHeight, 25 );
+                        }
+
+                        if( 0 == m_pRtmpClient2->Send( pVideoSample->abySample, (int)pVideoSample->lSampleLength, RTMP_PACKET_TYPE_VIDEO, (DWORD)lVideoMaxTime, dwVideoDelta ) )
+                            Rtmp2SendError();
+                    }
+                }
+                else
+                    printf("%s:%d  Error: Get next video sample timestamp failed !!!\n", __FILE__, __LINE__ );
+            }
+//        }
+        else
+            usleep( 5000 );
+    }
+    MSDK_SAFE_DELETE( pVideoSample );
+    MSDK_SAFE_DELETE( pAudioSample );
+}
+
 mfxStatus one_process::InitVideoDecoder( sInputParams *pParams )
 {
     MSDK_CHECK_POINTER( pParams, MFX_ERR_NULL_PTR );
@@ -399,3 +535,259 @@ void one_process::SetDelay(int Time)
     m_pVideoEncoder->SetDelay(Time);
 }
 
+bool one_process::InitRtmpClient1()
+{
+//    if( !m_CurChannelSettingInfo.bRtmpEnable1 )
+//    {
+//        SendLogToShow( RTMP1, true, QString("Rtmp 1 is disabled! ") );
+//        return false;
+//    }
+
+    if( m_pRtmpClient1 )
+        m_pRtmpClient1->Reset();
+    else
+    {
+        m_pRtmpClient1 = new CRtmpClient();
+        if( NULL == m_pRtmpClient1 )
+        {
+            printf("%s:%d  Error: m_pRtmpClient1 is NULL, Cannot to here!!!\n", __FILE__, __LINE__ );
+            return false;
+        }
+    }
+
+    if( m_pRtmpClient1->Initialize() < 0 )
+    {
+        SendLogToShow( RTMP1, true, QString("Rtmp1 initialize failed! ") );
+        return false;
+    }
+
+//    if( m_CurChannelSettingInfo.strRtmpAddr1.isEmpty()  )
+//    {
+//        SendLogToShow( RTMP1, true, QString("Rtmp1 url is empty! ") );
+//        return false;
+//    }
+    const char* addr = "1.8.84.12/live/livestream";
+    m_pRtmpClient1->SetURL( addr );
+    m_pRtmpClient1->SetAudioDelay( 300 );
+
+    if( false == m_pRtmpClient1->Connect() )
+    {
+        printf("rtmp1 connect failed!\n");
+        SendLogToShow( RTMP1, true, QString("Rtmp1 client connect falied! ") );
+        return false;
+    }
+
+    m_bRtmpEnable1 = true;
+    printf("rtmp1 running.....................!\n");
+    SendLogToShow( RTMP1, false, QString( "Running " ) );
+    return true;
+}
+
+bool one_process::InitRtmpClient2()
+{
+//    if( !m_CurChannelSettingInfo.bRtmpEnable2 )
+//    {
+//        SendLogToShow( RTMP2, true,  QString("Rtmp 2 is disabled!") );
+//        return false;
+//    }
+
+    if( m_pRtmpClient2 )
+        m_pRtmpClient2->Reset();
+    else
+    {
+        m_pRtmpClient2 = new CRtmpClient();
+        if( NULL == m_pRtmpClient2 )
+        {
+            printf("%s:%d  Error: m_pRtmpClient2 is NULL, Cannot to here!!!\n", __FILE__, __LINE__ );
+            return false;
+        }
+    }
+
+    if( m_pRtmpClient2->Initialize() < 0 )
+    {
+        SendLogToShow( RTMP2, true, QString("Rtmp2 initialize failed!") );
+        return false;
+    }
+
+//    if( m_CurChannelSettingInfo.strRtmpAddr2.isEmpty()  )
+//    {
+//        SendLogToShow( RTMP2, true, QString("Rtmp2 url is empty!") );
+//        return false;
+//    }
+
+    m_pRtmpClient2->SetURL( "1.8.84.12/live/livestream1" );
+    m_pRtmpClient2->SetAudioDelay( 300 );
+
+    if( false == m_pRtmpClient2->Connect() )
+    {
+        SendLogToShow( RTMP2, true, QString("Rtmp2 client connect falied!") );
+        return false;
+    }
+    m_bRtmpEnable2 = true;
+    SendLogToShow( RTMP2, false, QString( "Running " ) );
+
+    return true;
+}
+
+//bool one_process::InitUdpRtpClient()
+//{
+////    if( !m_CurChannelSettingInfo.bUdpOrRtpEnable )
+////    {
+////        SendLogToShow( UDP_RTP, true, QString("UDP or RTP is disabled!") );
+////        return false;
+////    }
+
+//    if( m_pTSEncapsulator )
+//        m_pTSEncapsulator->Reset();
+//    else
+//    {
+//        m_pTSEncapsulator = new CTSEncapsulator();
+//        if( NULL == m_pTSEncapsulator )
+//            return false;
+//    }
+
+//    m_pTSEncapsulator->SetAudioDelay( m_CurChannelSettingInfo.nUdpOrRtpAudioDelay );
+//    m_pTSEncapsulator->SetServerIP( m_CurChannelSettingInfo.strUdpOrRtpIp.toLatin1().data() );
+//    m_pTSEncapsulator->SetServerPort( m_CurChannelSettingInfo.nUdpOrRtpPort );
+//    m_pTSEncapsulator->SetOutType( m_CurChannelSettingInfo.bUdpOrRtpAddr ? 0:1 );
+//    if( m_pTSEncapsulator->Initialize() < 0 )
+//    {
+//        SendLogToShow( UDP_RTP, true, QString("UDP or RTP initialize failed!") );
+//        return false;
+//    }
+
+////    m_bUdpRtpEnable = m_CurChannelSettingInfo.bUdpOrRtpEnable;
+//    SendLogToShow( UDP_RTP, false, QString( "Running " ) );
+//    return true;
+//}
+
+void one_process::SendLogToShow( SEND_CLIENT_INDEX sendClientIndex, bool bError, const QString strLogMsg )
+{
+//    int nSendLogCount = m_vecSendLog.count();
+//    if( nSendLogCount <= 0 || nSendLogCount <= sendClientIndex )
+//        return;
+
+//    LOG_INFO sendLog = m_vecSendLog[sendClientIndex];
+//    if( (sendLog.bError == bError) && strLogMsg.contains(sendLog.strLogMsg) )
+//        return;
+
+//    sendLog.bError = bError;
+//    sendLog.strLogMsg = strLogMsg;
+//    m_vecSendLog.replace( sendClientIndex, sendLog );
+
+    QString strSendLog = QString( "" );
+    bool bSendError = false;
+//    for( int i=0; i<nSendLogCount; i++ )
+//    {
+//        if( m_vecSendLog[i].bError )
+//        {
+//            bSendError = m_vecSendLog[i].bError;
+//            strSendLog.append( m_vecSendLog[i].strLogMsg );
+//        }
+//        else
+//            m_vecSendLog[i].strLogMsg.clear();
+////    }
+//    if( !bSendError )
+//        strSendLog = QString( "Running" );
+
+//    emit emitSendLog( m_index, strSendLog, bSendError );
+}
+
+//void one_process::Rtmp1SendError()
+//{
+//    CloseRtmp1();
+//    SendLogToShow( RTMP1, true, QString( "Rtmp1 send failed! try to connect ..........." ) );
+//    m_nRtmpDisconnectTime1 = QDateTime::currentDateTime().toTime_t();
+//    // send 失败时，启动一个2sec timer 尝试connect,共尝试10mins
+//    emit ConnectRtmpTimer1(); //pthread cannot start a timer, so use signal to start timer
+//}
+
+//void one_process::Rtmp2SendError()
+//{
+//    CloseRtmp2();
+//    SendLogToShow( RTMP2, true, QString( "Rtmp2 send failed! try to connect ..........." ) );
+//    m_nRtmpDisconnectTime2 = QDateTime::currentDateTime().toTime_t();
+//    emit ConnectRtmpTimer2();
+//}
+
+/////////////////// slot ////////////////////////
+void one_process::ConnectRtmp1()
+{
+    // Fixme: 10 min try connect
+    if( QDateTime::currentDateTime().toTime_t() < (m_nRtmpDisconnectTime1 + 10*60) )
+    {
+        if( InitRtmpClient1() ) // 连接成功
+        {
+            SendLogToShow( RTMP1, false, QString( "Running " ) );
+            m_nRtmpDisconnectTime1 = 0;
+            return;
+        }
+        m_ConnectRtmpTimer1.start( CONNECT_TIMER );
+    }
+    else
+        SendLogToShow( RTMP1, true, QString( "Rtmp1 network connect error! " ) );
+}
+
+void one_process::ResponseConnectRtmpTimer1()
+{
+    m_ConnectRtmpTimer1.start( CONNECT_TIMER );
+}
+
+void one_process::ConnectRtmp2()
+{
+    // Fixme: 10 min try connect
+    if( QDateTime::currentDateTime().toTime_t() < (m_nRtmpDisconnectTime2 + 10*60) )
+    {
+        if( InitRtmpClient2() ) // 连接成功
+        {
+            SendLogToShow( RTMP2, false, QString("Running") );
+            m_nRtmpDisconnectTime2 = 0;
+            return;
+        }
+        m_ConnectRtmpTimer2.start( CONNECT_TIMER );
+    }
+    else
+        SendLogToShow( RTMP2, true, QString( "Rtmp2 network connect error! " ) );
+}
+
+void one_process::ResponseConnectRtmpTimer2()
+{
+    m_ConnectRtmpTimer2.start( CONNECT_TIMER );
+}
+
+void one_process::Rtmp1SendError()
+{
+    CloseRtmp1();
+    SendLogToShow( RTMP1, true, QString( "Rtmp1 send failed! try to connect ..........." ) );
+    m_nRtmpDisconnectTime1 = QDateTime::currentDateTime().toTime_t();
+    // send 失败时，启动一个2sec timer 尝试connect,共尝试10mins
+    emit ConnectRtmpTimer1(); //pthread cannot start a timer, so use signal to start timer
+}
+
+void one_process::Rtmp2SendError()
+{
+    CloseRtmp2();
+    SendLogToShow( RTMP2, true, QString( "Rtmp2 send failed! try to connect ..........." ) );
+    m_nRtmpDisconnectTime2 = QDateTime::currentDateTime().toTime_t();
+    emit ConnectRtmpTimer2();
+}
+
+void one_process::CloseRtmp1()
+{
+    if( m_pRtmpClient1 )
+    {
+        m_bRtmpEnable1 = false;
+        m_pRtmpClient1->Close();
+        m_pRtmpClient1->FreeRtmp();
+    }
+}
+
+void one_process::CloseRtmp2()
+{
+    if( m_pRtmpClient2 )
+    {
+        m_bRtmpEnable2 = false;
+        m_pRtmpClient2->Close();
+        m_pRtmpClient2->FreeRtmp();
+    }
+}

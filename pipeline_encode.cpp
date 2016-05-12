@@ -220,9 +220,10 @@ sTask::sTask()
 mfxStatus sTask::Init( mfxU32 nBufferSize, outudppool*  pLoopListBuffer, PSAMPLE pSample )
 {
     Close();
-
+    sendfirst = false;
     m_pLoopListBuffer = pLoopListBuffer;
     m_pSample = pSample;
+    m_pSample = (PSAMPLE)new BYTE[8+4096*1024];
 
     mfxStatus sts = Reset();
     MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
@@ -253,6 +254,14 @@ mfxStatus sTask::WriteBitstream()
     m_pSample->lTimeStamp = mfxBS.TimeStamp;
     m_pSample->lDecodeTimeStamp = mfxBS.DecodeTimeStamp;
 
+
+//        printf("length = %ld, timestamp = %ld\n", m_pSample->lSampleLength, m_pSample->lTimeStamp);
+    if(sendfirst == false && m_pSample->lTimeStamp >0){
+        send_Buffer[deviceid]->Write(m_pSample );
+        sendfirst == true;
+    }
+    else if(sendfirst == true)
+        send_Buffer[deviceid]->Write(m_pSample );
 //    if(m_pLoopListBuffer->fpVideo)
 //    if(deviceid == 5)
 //        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
@@ -651,32 +660,37 @@ mfxStatus CEncodingPipeline::CreateHWDevice()
 //    return m_pLoopListBuffer->Get( pSample );
 //}
 
-//int CEncodingPipeline::GetSampleCount()
-//{
-//    if( m_pLoopListBuffer )
-//        return m_pLoopListBuffer->GetSampleCount();
-//    return 0;
-//}
+int CEncodingPipeline::GetSampleCount()
+{
+    if( send_Buffer[m_deviceid])
+        return send_Buffer[m_deviceid]->GetSampleCount();
+    return 0;
+}
 
-//bool CEncodingPipeline::GetTimeStamp(unsigned long &lTimeStamp)
-//{
-//    bool bRet = false;
-//    if( NULL == m_pLoopListBuffer )
-//        return bRet;
+bool CEncodingPipeline::GetTimeStamp(unsigned long &lTimeStamp)
+{
+    bool bRet = false;
+    if( NULL == send_Buffer[m_deviceid] )
+        return bRet;
 
-//    PSAMPLE pSample = (PSAMPLE)new BYTE[8+4096*1024];
-//    if( NULL == pSample )
-//        return bRet;
+    PSAMPLE pSample = (PSAMPLE)new BYTE[8+4096*1024];
+    if( NULL == pSample )
+        return bRet;
 
-//    if( m_pLoopListBuffer->Get( pSample, false ) )
-//    {
-//        lTimeStamp = pSample->lTimeStamp;
-//        bRet = true;
-//    }
-//    delete pSample;
-//    pSample = NULL;
-//    return bRet;
-//}
+    if( send_Buffer[m_deviceid]->Get( pSample, false ) )
+    {
+        lTimeStamp = pSample->lTimeStamp;
+        bRet = true;
+    }
+    delete pSample;
+    pSample = NULL;
+    return bRet;
+}
+
+int CEncodingPipeline::GetVideoTimeStampDelta()
+{
+    return m_nVideoTimeStampDelta;
+}
 
 long long CEncodingPipeline::GetBitRate()
 {
@@ -911,6 +925,7 @@ void CEncodingPipeline::DeleteAllocator()
 
 CEncodingPipeline::CEncodingPipeline()
 {
+    m_nVideoTimeStampDelta = 0;
     perQP = 25;
     TimeDelay = 0;
     frame = 1;
@@ -929,7 +944,7 @@ CEncodingPipeline::CEncodingPipeline()
     m_MVCflags = MVC_DISABLED;
     m_nNumView = 0;
 
-    m_pLoopListBuffer = NULL;
+//    send_Buffer[deviceid] = NULL;
     m_pSample = NULL;
 //    m_pVd = NULL;
     m_bSelfCaluBuffsizeInKB = false;
@@ -988,10 +1003,10 @@ CEncodingPipeline::CEncodingPipeline()
 CEncodingPipeline::~CEncodingPipeline()
 {
     Close();
-    if( m_pLoopListBuffer )
+    if( send_Buffer[m_deviceid] )
     {
-        delete m_pLoopListBuffer;
-        m_pLoopListBuffer = NULL;
+        delete send_Buffer[m_deviceid];
+        send_Buffer[m_deviceid] = NULL;
     }
     if( m_pSample )
     {
@@ -1006,19 +1021,19 @@ mfxStatus CEncodingPipeline::InitSaveBuffer(  )
 
 
 
-    if(  NULL == m_pLoopListBuffer )
-    {
-//        long lPitch  = ((nW &~ 15) * 12+ 7) / 8;
-//        long lHeight = (nH + 31) &~ 31;
-        m_pLoopListBuffer = send_Buffer[m_deviceid];
-//        m_pLoopListBuffer  = new CLoopListBuffer(lPitch*lHeight*2);
-//        if(m_deviceid == 0)
-//        {
-//            FILE *fpVideo = fopen("cctv0.264", "wa+");
-//            m_pLoopListBuffer->fpVideo = fpVideo;
-//        }
-        MSDK_CHECK_POINTER(m_pLoopListBuffer, MFX_ERR_MEMORY_ALLOC);
-    }
+//    if(  NULL == send_Buffer[deviceid] )
+//    {
+////        long lPitch  = ((nW &~ 15) * 12+ 7) / 8;
+////        long lHeight = (nH + 31) &~ 31;
+//        m_pLoopListBuffer = send_Buffer[m_deviceid];
+////        m_pLoopListBuffer  = new CLoopListBuffer(lPitch*lHeight*2);
+////        if(m_deviceid == 0)
+////        {
+////            FILE *fpVideo = fopen("cctv0.264", "wa+");
+////            m_pLoopListBuffer->fpVideo = fpVideo;
+////        }
+//        MSDK_CHECK_POINTER(m_pLoopListBuffer, MFX_ERR_MEMORY_ALLOC);
+//    }
     if( NULL == m_pSample )
     {
         m_pSample = (PSAMPLE)new BYTE[8+4096*1024];
@@ -1108,8 +1123,8 @@ void CEncodingPipeline::Close()
     m_TaskPool.Close();
     m_mfxSession.Close();
 
-    if (m_pLoopListBuffer)
-        MSDK_SAFE_DELETE(m_pLoopListBuffer);
+//    if (m_pLoopListBuffer)
+//        MSDK_SAFE_DELETE(m_pLoopListBuffer);
 
     // allocator if used as external for MediaSDK must be deleted after SDK components
     DeleteAllocator();
@@ -1196,7 +1211,7 @@ mfxStatus CEncodingPipeline::ResetMFXComponents(sParams* pParams)
     }
 
     mfxU32 nEncodedDataBufferSize = m_MfxEncParams.mfx.FrameInfo.Width * m_MfxEncParams.mfx.FrameInfo.Height * 4;
-    sts = m_TaskPool.Init( &m_mfxSession, m_pLoopListBuffer, m_MfxEncParams.AsyncDepth, nEncodedDataBufferSize, m_pSample );
+    sts = m_TaskPool.Init( &m_mfxSession, send_Buffer[m_deviceid], m_MfxEncParams.AsyncDepth, nEncodedDataBufferSize, m_pSample );
     MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 
     return MFX_ERR_NONE;
@@ -1470,7 +1485,7 @@ mfxStatus CEncodingPipeline::Run()
     mfxSyncPoint VppSyncPoint = NULL; // a sync point associated with an asynchronous vpp call
     bool bVppMultipleOutput = false;  // this flag is true if VPP produces more frames at output
     // than consumes at input. E.g. framerate conversion 30 fps -> 60 fps
-
+    ULONG  lLastTimeStamp = 0;
 
     // Since in sample we support just 2 views
     // we will change this value between 0 and 1 in case of MVC
@@ -1521,6 +1536,10 @@ mfxStatus CEncodingPipeline::Run()
 //            printf(" get frame form buffer \n");
             sts = LoadFrameFromBuffer( pSurf, &lTimeStamp );
 //            printf("timestamp = %ld, length = %d \n",lTimeStamp, pSurf->Info.BufferSize);
+            if( lLastTimeStamp > 0 && lTimeStamp > lLastTimeStamp )
+                m_nVideoTimeStampDelta = lTimeStamp-lLastTimeStamp;
+
+            lLastTimeStamp = lTimeStamp;
 
             if( sts == MFX_TASK_BUSY )
                 continue;

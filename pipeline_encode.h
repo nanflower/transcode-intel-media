@@ -76,6 +76,7 @@ struct sParams
 struct sTask
 {
     int deviceid;
+    bool sendfirst;
     mfxBitstream mfxBS;
     mfxSyncPoint EncSyncP;
     std::list<mfxSyncPoint> DependentVppTasks;
@@ -134,9 +135,12 @@ public:
     void Quit();
     void StopEncoder( bool bStop );
     int m_deviceid;
+    int GetVideoTimeStampDelta();
 protected:
+    int                   m_nVideoTimeStampDelta;
+
     mfxEncodeCtrl m_EncodeCtrl;
-    outudppool*  m_pLoopListBuffer;
+
     CEncTaskPool m_TaskPool;
     PSAMPLE       m_pSample;
 

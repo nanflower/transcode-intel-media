@@ -16,9 +16,11 @@ QMAKE_CXXFLAGS += -I/usr/local/include -I$(MFX_HOME)/include
 QMAKE_LIBS += -L$(MFX_HOME)/lib/lin_x64 -lmfx -lva -lva-drm -lpthread -lrt -ldl
 QMAKE_CXXFLAGS += -Wpointer-arith
 
+QT += xml
 INCLUDEPATH += /opt/intel/mediasdk/include
 INCLUDEPATH += /usr/local/include
-LIBS     += -lavcodec -lavfilter -lavformat -lavutil -lswresample -lswscale
+INCLUDEPATH += /usr/local/include/librtmp/
+LIBS     += -lavcodec -lavfilter -lavformat -lavutil -lswresample -lswscale -lrtmp
 LIBS +=  -L/usr/local/lib/ -lfaac -L/usr/local/
 
 
@@ -44,7 +46,9 @@ SOURCES += main.cpp\
     time_def.cpp \
     thread_defs.cpp \
     atomic_defs.cpp \
-    thread_defs2.cpp
+    thread_defs2.cpp \
+    rtmp_client.cpp \
+    parse_channel_setting_config.cpp
 
 HEADERS  += mainwindow.h \
     udp.h \
@@ -78,6 +82,8 @@ HEADERS  += mainwindow.h \
     sample_types.h \
     avc_structures.h \
     plugin_loader.h \
-    mfx_buffering.h
+    mfx_buffering.h \
+    rtmp_client.h \
+    parse_channel_setting_config.h
 
 FORMS    += mainwindow.ui

@@ -410,6 +410,14 @@ udpsocket::udpsocket()
     read_ptr15 = 0;
 
     fp_write=fopen("cuc60anniversary_start.aac","wb+"); //输出文件
+
+    m_pSample = (PSAMPLE)new BYTE[8+4096*10];
+    if( NULL == m_pSample )
+    {
+        printf("%s:%d   Error:new m_pSample failed!!!\n", __FILE__, __LINE__ );
+        return;
+    }
+    memset( m_pSample, 0, 8+4096*10 );
 }
 
 udpsocket::~udpsocket()
@@ -889,7 +897,12 @@ int udpsocket::ts_demux()
 //                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a);
 //                                else if(protindex == 10)
 //                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a1);
-//                                send_Buffer[protindex+15]
+                                memcpy( &(m_pSample->abySample[0]), audio_pkt.data, audio_pkt.size );
+                                m_pSample->lSampleLength =  audio_pkt.size;
+                                m_pSample->lTimeStamp = audio_pkt.pts;
+                                m_pSample->lDecodeTimeStamp = audio_pkt.dts;
+                                if( m_pSample->lSampleLength != 0 && m_pSample->lTimeStamp >5000 &&m_pSample->lDecodeTimeStamp > 5000 )
+                                    send_Buffer[protindex+15]->Write(m_pSample );
                                 av_free_packet(&audio_pkt);
                                 av_frame_free(&pOutAudioframe[0]);
                             }

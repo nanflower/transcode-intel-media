@@ -22,6 +22,22 @@ typedef enum
 
 typedef enum
 {
+    INVALID_INPUT = -1,
+    INPUT_1080I_50_60 = 0,
+    INPUT_720P_50_60
+}INPUT_VIDEO_FORMAT;
+
+
+typedef enum
+{
+    OUTPUT_1920_1080I_25_30 = 0,
+    OUTPUT_1440_1080I_25_30,
+    OUTPUT_720P_50_60,
+    OUTPUT_720P_25_30,
+}OUTPUT_VIDEO_FORMAT;
+
+typedef enum
+{
     RES_1080_P_60 = 1,
     RES_1080_I_60 = 2,
     RES_720_P_60 = 3,
