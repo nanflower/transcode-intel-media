@@ -1310,6 +1310,7 @@ mfxStatus CDecodingPipeline::ReadFrameFromBuffer(mfxBitstream* pBS)
 
     memcpy( pBS->Data + pBS->DataLength, pData, DataLength);
 
+    pBS->TimeStamp = TimeStamp;
     pBS->DataLength += DataLength;
     av_free(pData);
 

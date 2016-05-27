@@ -5,6 +5,7 @@
 #include "decodepool.h"
 #include "transcodepool.h"
 
+//缓冲区
 outudppool *send_Buffer[32] = {0};
 decodepool *decode_Buffer[16] = {0};
 transcodepool *transcode_Buffer[16] = {0};

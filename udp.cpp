@@ -29,6 +29,7 @@ int udp::Init()
             m_ChannelGet[i]->thread_init(i+1);  //udp接收线程
         }
 
+        //统计复用
 //        int AverageNum = 12;
 //        int AverageNum1 = 36;
 //        long long BitrateCount = 0, RealBitrateCount = 0, RealBitrateCount1 = 0;
@@ -120,7 +121,7 @@ int udp::Init()
 //                        if(Bitrate[i]*FrameRate>1200000 && BitrateCount>15000000)
 //                            qp[i] += 1;
 ////                        m_ChannelGet[i]->SetQP(qp[i]);
-////                        m_ChannelGet[i]->SetQP(25);
+//                        m_ChannelGet[i]->SetQP(25);
 //                    }
 //                    sprintf(str1, "%d", qpi*100000);
 //                    fputs(str1, m_write1);

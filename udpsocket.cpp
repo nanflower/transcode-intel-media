@@ -5,9 +5,10 @@
 FILE *fp_write;
 //FILE *fp_v;
 //FILE *fp_v1;
-//FILE *fp_a;
-//FILE *fp_a1;
+FILE *fp_a;
+//FILE */*fp_a1*/;
 
+//静态
 pthread_mutex_t locker;
 uint8_t* q_buf;
 int bufsize;
@@ -329,6 +330,7 @@ udpsocket::udpsocket()
     curbitrate = 0;
     bufsize = 1024*512;
 
+    //静态
     pthread_mutex_init(&locker, NULL);
     q_buf = (uint8_t*)av_mallocz(sizeof(uint8_t)*1024*512);
     write_ptr = 0;
@@ -422,6 +424,7 @@ udpsocket::udpsocket()
 
 udpsocket::~udpsocket()
 {
+    //静态
     if(protindex == 1){
         pthread_mutex_destroy(&locker);
         av_free(q_buf);
@@ -493,24 +496,19 @@ void udpsocket::thread_init(int index)
 
     protindex = index;
 
+    //udp recv
     pthread_t udp_recv_thread;
     memset( &udp_recv_thread, 0, sizeof( udp_recv_thread ) );
+
     if( 0 != pthread_create( &udp_recv_thread, NULL, udp_tsrecv, this ) )
         printf("%s:%d  Error: Create udp receive thread failed !!!\n", __FILE__, __LINE__ );
 
+    //ts demux
     pthread_t ts_demux_thread;
     memset( &ts_demux_thread, 0, sizeof( ts_demux_thread ) );
 
     if( 0 != pthread_create( &ts_demux_thread, NULL, ts_demuxer, this ) )
         printf("%s:%d  Error: Create ts demux thread failed !!!\n", __FILE__, __LINE__ );
-
-//    pthread_t udp_send_thread;
-//    memset( &udp_send_thread, 0, sizeof( udp_send_thread ) );
-
-//    if( 0 != pthread_create( &udp_send_thread, NULL, udp_send, this ))
-//        printf("%s:%d  Error: Create video encoder thread failed !!!\n", __FILE__, __LINE__ );
-
-//    pthread_detach(udp_send_thread);
 
     pthread_detach(ts_demux_thread);
     pthread_detach(udp_recv_thread);
@@ -660,7 +658,7 @@ int udpsocket::ts_demux()
 
 //    fp_v = fopen("test0.mpg","wb+"); //输出文件
 //    fp_v1 = fopen("test1.mpg" , "wb+");
-//    fp_a = fopen("audio_out.aac","wb+");
+    fp_a = fopen("audio_out.aac","wb+");
 //    fp_a1 = fopen("audio1.aac","wb+");
 
     //FFMPEG
@@ -745,6 +743,7 @@ int udpsocket::ts_demux()
         printf("videoindex %d = %d, audioindex %d = %d\n",i , videoindex[i], i ,audioindex[i]);
 
 
+    //音频decoder
     for( int i=0; i<AUDIO_NUM; i++ ){
         pAst[i] = pFmt->streams[audioindex[i]];
         pAudioCodecCtx[i] = pAst[i]->codec;
@@ -770,7 +769,7 @@ int udpsocket::ts_demux()
     }
     const char* out_audio_file = "transcodeaudio.aac";          //Output URL
 
-    //Method 1.
+    //音频初始化
     for(int i=0; i<AUDIO_NUM; i++){
         outAudioFormatCtx[i] = avformat_alloc_context();
         outAudioFormatCtx[i]->oformat = av_guess_format(NULL, out_audio_file, NULL);
@@ -834,8 +833,8 @@ int udpsocket::ts_demux()
     SwrContext *resample_context[AUDIO_NUM];
     long long pts = 0;
     /** Initialize the resampler to be able to convert audio sample formats. */
-//    if (init_resampler(pAudioCodecCtx[0], AudioEncodeCtx[0],
-//                       &resample_context))
+
+    //音频fifo初始化
     for(int i=0; i<AUDIO_NUM; i++){
         printf(" samplerate input = %d , samplerate output = %d\n",pAudioCodecCtx[i]->sample_rate, AudioEncodeCtx[i]->sample_rate);
         resample_context[i] = swr_alloc_set_opts(NULL, av_get_default_channel_layout(AudioEncodeCtx[i]->channels),
@@ -853,7 +852,6 @@ int udpsocket::ts_demux()
             return -1;
         }
     }
-//    printf("swr over\n");
     uint8_t *converted_input_samples = NULL;
     converted_input_samples = (uint8_t *)calloc(AudioEncodeCtx[0]->channels, sizeof(*converted_input_samples));
 
@@ -861,10 +859,15 @@ int udpsocket::ts_demux()
         if (av_read_frame(pFmt, &pkt) >= 0) {
             for( int i=0; i<VIDEO_NUM; i++ ){
                 if (pkt.stream_index == videoindex[i]) {
+                    //视频
                     decode_Buffer[protindex-1]->putbuffer(&pkt);
+//                    printf("video timestamp = %lld\n",pkt.pts);
                  }else if (pkt.stream_index == audioindex[i]) {
+                    //音频
                     pAudioframe[i] = av_frame_alloc();
                     if (avcodec_decode_audio4(pAudioCodecCtx[i], pAudioframe[i], &frame_size, &pkt) >= 0) {
+//                        printf("audio timestamp = %lld\n",pkt.pts);
+
                             av_samples_alloc(&converted_input_samples, NULL, AudioEncodeCtx[i]->channels, pAudioframe[i]->nb_samples, AudioEncodeCtx[i]->sample_fmt, 0);
                             int error = 0;
                             if((error = swr_convert(resample_context[i], &converted_input_samples, pAudioframe[i]->nb_samples,
@@ -874,6 +877,7 @@ int udpsocket::ts_demux()
                             av_audio_fifo_write(af[i], (void **)&converted_input_samples, pAudioframe[i]->nb_samples);
 
                             int got_frame=0;
+                            pts = 0;
                             while(av_audio_fifo_size(af[i]) >= AudioEncodeCtx[i]->frame_size){
                                 int frame_size = FFMIN(av_audio_fifo_size(af[i]),AudioEncodeCtx[i]->frame_size);
                                 pOutAudioframe[i] = av_frame_alloc();
@@ -885,7 +889,8 @@ int udpsocket::ts_demux()
                                 av_frame_get_buffer(pOutAudioframe[i], 0);
                                 av_audio_fifo_read(af[i], (void **)&pOutAudioframe[i]->data, frame_size);
 
-                                pOutAudioframe[i]->pts=pts;
+                                pOutAudioframe[i]->pts=pkt.pts+pts;
+//                                pOutAudioframe[i]->pts = pts;
                                 pts += pOutAudioframe[i]->nb_samples;
 
                                 audio_pkt.data = NULL;
@@ -897,12 +902,14 @@ int udpsocket::ts_demux()
 //                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a);
 //                                else if(protindex == 10)
 //                                    fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a1);
-                                memcpy( &(m_pSample->abySample[0]), audio_pkt.data, audio_pkt.size );
-                                m_pSample->lSampleLength =  audio_pkt.size;
+//                                fwrite(audio_pkt.data,audio_pkt.size, 1, fp_a1);
+                                memcpy( &(m_pSample->abySample[0]), audio_pkt.data, (unsigned long)audio_pkt.size );
+                                m_pSample->lSampleLength =  (unsigned long)audio_pkt.size;
                                 m_pSample->lTimeStamp = audio_pkt.pts;
-                                m_pSample->lDecodeTimeStamp = audio_pkt.dts;
-                                if( m_pSample->lSampleLength != 0 && m_pSample->lTimeStamp >5000 &&m_pSample->lDecodeTimeStamp > 5000 )
+                                if(m_pSample->lSampleLength != 0){
+//                                    printf("Sending  Audio length = %ld, timestamp = %lld\n",m_pSample->lSampleLength,m_pSample->lTimeStamp);
                                     send_Buffer[protindex+15]->Write(m_pSample );
+                                }
                                 av_free_packet(&audio_pkt);
                                 av_frame_free(&pOutAudioframe[0]);
                             }

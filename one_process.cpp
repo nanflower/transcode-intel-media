@@ -4,9 +4,15 @@
 
 const int CONNECT_TIMER = 2000;
 
+FILE *fprtmp_v;
+FILE *fprtmp_a;
+
 one_process::one_process( int index)
 {
 //    g_pCaptureDeviceVec[0]->Init();
+    fprtmp_v = fopen("rtmpout.264","wb+");
+    fprtmp_a = fopen("rtmpout.aac","wb+");
+
     m_bIsEncoderEnable = false;
     m_index = index;
     m_bStopEncoder = false;
@@ -54,6 +60,7 @@ void one_process::Init(void)
         return ;
     m_bIsEncoderEnable = true;
 
+    //视频decoder
     pthread_t mpeg2_decode_thread;
     memset( &mpeg2_decode_thread, 0, sizeof( mpeg2_decode_thread ) );
 
@@ -62,6 +69,7 @@ void one_process::Init(void)
 
     pthread_detach(mpeg2_decode_thread);
 
+    //视频encoder
     pthread_t h264_encoder_thread;
     memset( &h264_encoder_thread, 0, sizeof( h264_encoder_thread ) );
 
@@ -70,6 +78,7 @@ void one_process::Init(void)
 
     pthread_detach(h264_encoder_thread);
 
+    //rtmp
     pthread_t m_SendRtmpThread;
     memset( &m_SendRtmpThread, 0, sizeof( m_SendRtmpThread ) );
 
@@ -79,6 +88,7 @@ void one_process::Init(void)
             printf("%s:%d   Error: Create send thread failed !!!\n", __FILE__, __LINE__ );
     }
 
+    //udp sender
 //    pthread_t udp_send_thread;
 //    memset( &udp_send_thread, 0, sizeof( udp_send_thread ) );
 
@@ -291,74 +301,102 @@ void one_process::RunSendRtmp()
     while( m_bIsEncoderEnable )
     {
         // -------------------- RTMP1, RTMP2 send ------------------//
+//    printf("rtmp work.....................\n");
+        if( send_Buffer[m_index+16]->Get( pAudioSample ) )
+        {
+//            printf("rtmp audio work.....................\n");
+            if( m_bRtmpEnable1 && m_pRtmpClient1 )
+            {
+//                printf("audio:  %lu\n", pAudioSample->lTimeStamp);
 
-//        if( send_Buffer[m_index+16]->Get( pAudioSample ) )
-//        {
-//            if( m_bRtmpEnable1 && m_pRtmpClient1 )
-//            {
-//                printf("rtmp 1 length = %ld, timestamp = %ld \n", pAudioSample->lSampleLength, pAudioSample->lDecodeTimeStamp);
-//                if( 0 == m_pRtmpClient1->Send( pAudioSample->abySample, (int)pAudioSample->lSampleLength, RTMP_PACKET_TYPE_AUDIO, (DWORD)pAudioSample->lTimeStamp ) )
-//                    Rtmp1SendError();
-//                printf("out \n");
-//            }
+//                fwrite(pAudioSample->abySample,pAudioSample->lSampleLength,1,fprtmp_a);
+//                printf("rtmp  A length = %ld, timestamp = %ld \n", pAudioSample->lSampleLength, pAudioSample->lTimeStamp);
+                if( 0 == m_pRtmpClient1->Send( pAudioSample->abySample, (int)pAudioSample->lSampleLength, RTMP_PACKET_TYPE_AUDIO, (DWORD)pAudioSample->lTimeStamp ) )
+                    Rtmp1SendError();
+            }
 
 //            if( m_bRtmpEnable2 && m_pRtmpClient2 )
 //            {
 //                if( 0 == m_pRtmpClient2->Send( pAudioSample->abySample, (int)pAudioSample->lSampleLength, RTMP_PACKET_TYPE_AUDIO, (DWORD)pAudioSample->lTimeStamp ) )
 //                    Rtmp2SendError();
 //            }
-
             // ----------------- send one video frame --------------------- //
-            if( m_pVideoEncoder && m_pVideoEncoder->GetSampleCount() >= 2 )
-            {
-                if( false == send_Buffer[m_index]->Get( pVideoSample )  )
-                {
-                    printf("%s:%d  Error: Get current video sample failed ,m_index = %d!!!\n", __FILE__, __LINE__,m_index );
-                    break;
-                }
-                // send  video rtmp
-                ULONG lNextTimeStamp = 0;
-                if( m_pVideoEncoder->GetTimeStamp( lNextTimeStamp ) )
-                {
-                    ULONG lCurTimeStamp = pVideoSample->lTimeStamp;
-                    int nVideoTimeStampDelta = m_pVideoEncoder->GetVideoTimeStampDelta();
-                    lVideoMaxTime = ( lCurTimeStamp > lVideoMaxTime ) ? lCurTimeStamp : ( lVideoMaxTime+ nVideoTimeStampDelta );
-                    unsigned int dwVideoDelta = ( lNextTimeStamp < lCurTimeStamp )? (lCurTimeStamp - lNextTimeStamp + nVideoTimeStampDelta) : 0;
+//            printf("rtmp get  video  work..................... sample count = %d\n",m_pVideoEncoder->GetSampleCount());
+//            if( m_pVideoEncoder && m_pVideoEncoder->GetSampleCount() >= 2 )
+//            {
+//                if( false == send_Buffer[m_index]->Get( pVideoSample )  )
+//                {
+//                    printf("%s:%d  Error: Get current video sample failed ,m_index = %d!!!\n", __FILE__, __LINE__,m_index );
+//                    break;
+//                }
+//                // send  video rtmp
+//                ULONG lNextTimeStamp = 0;
 
-                    if( m_bRtmpEnable1 && m_pRtmpClient1 )
-                    {
-                        if( bFirstSendRtmp1 )
-                        {
-                            bFirstSendRtmp1 = false;
-                            unsigned short nWidth, nHeight;
-                            nWidth = 720;
-                            nHeight = 576;
-                            m_pRtmpClient1->SetVideoParam( nWidth, nHeight, 25 );
-                        }
-//                        printf("/*send length*/ = %ld \n",pVideoSample->lSampleLength);
-                        if( 0 == m_pRtmpClient1->Send( pVideoSample->abySample, (int)pVideoSample->lSampleLength, RTMP_PACKET_TYPE_VIDEO, (DWORD)lVideoMaxTime, dwVideoDelta ) )
-                            Rtmp1SendError();
-                    }
+//                if( m_pVideoEncoder->GetTimeStamp( lNextTimeStamp ) )
+//                {
+////                    printf("rtmp video work.....................\n");
+//                    ULONG lCurTimeStamp = pVideoSample->lTimeStamp;
+//                    int nVideoTimeStampDelta = m_pVideoEncoder->GetVideoTimeStampDelta();
+//                    lVideoMaxTime = ( lCurTimeStamp > lVideoMaxTime ) ? lCurTimeStamp : ( lVideoMaxTime+ nVideoTimeStampDelta );
+//                    unsigned int dwVideoDelta = ( lNextTimeStamp < lCurTimeStamp )? (lCurTimeStamp - lNextTimeStamp + nVideoTimeStampDelta) : 0;
 
-                    if( m_bRtmpEnable2 && m_pRtmpClient2 )
-                    {
-                        if( bFirstSendRtmp2 )
-                        {
-                            bFirstSendRtmp2 = false;
-                            unsigned short nWidth, nHeight;
-                            nWidth = 720;
-                            nHeight = 576;
-                            m_pRtmpClient2->SetVideoParam( nWidth, nHeight, 25 );
-                        }
+//                    if( m_bRtmpEnable1 && m_pRtmpClient1 )
+//                    {
+//                        if( bFirstSendRtmp1 )
+//                        {
+//                            bFirstSendRtmp1 = false;
+//                            unsigned short nWidth, nHeight;
+//                            nWidth = 720;
+//                            nHeight = 576;
+//                            m_pRtmpClient1->SetVideoParam( nWidth, nHeight, 25 );
+//                        }
+////                        printf("video:  %lu\n", pVideoSample->lTimeStamp);
 
-                        if( 0 == m_pRtmpClient2->Send( pVideoSample->abySample, (int)pVideoSample->lSampleLength, RTMP_PACKET_TYPE_VIDEO, (DWORD)lVideoMaxTime, dwVideoDelta ) )
-                            Rtmp2SendError();
-                    }
-                }
-                else
-                    printf("%s:%d  Error: Get next video sample timestamp failed !!!\n", __FILE__, __LINE__ );
-            }
-//        }
+////                        printf("rtmp V  = %ld ,t imestamp = %ld \n",pVideoSample->lSampleLength, pVideoSample->lTimeStamp);
+//                        fwrite(pVideoSample->abySample,pVideoSample->lSampleLength,1,fprtmp_v);
+////                        if( 0 == m_pRtmpClient1->Send( pVideoSample->abySample, (int)pVideoSample->lSampleLength, RTMP_PACKET_TYPE_VIDEO, (DWORD)pVideoSample->lTimeStamp ) ){
+//                        if( 0 == m_pRtmpClient1->Send( pVideoSample->abySample, (int)pVideoSample->lSampleLength, RTMP_PACKET_TYPE_VIDEO, (DWORD)lVideoMaxTime, dwVideoDelta ) ){
+////                            bFirstSendRtmp1 = true;
+//                            Rtmp1SendError();
+//                        }
+
+
+////                    if( m_bRtmpEnable2 && m_pRtmpClient2 )
+////                    {
+////                        if( bFirstSendRtmp2 )
+////                        {
+////                            bFirstSendRtmp2 = false;
+////                            unsigned short nWidth, nHeight;
+////                            nWidth = 720;
+////                            nHeight = 576;
+////                            m_pRtmpClient2->SetVideoParam( nWidth, nHeight, 25 );
+////                        }
+
+////                        if( 0 == m_pRtmpClient2->Send( pVideoSample->abySample, (int)pVideoSample->lSampleLength, RTMP_PACKET_TYPE_VIDEO, (DWORD)lVideoMaxTime, dwVideoDelta ) ){
+//////                            bFirstSendRtmp2 = true;
+////                            Rtmp2SendError();
+////                         }
+////                    }
+//                }
+//                else
+//                    printf("%s:%d  Error: Get next video sample timestamp failed !!!\n", __FILE__, __LINE__ );
+//            }
+//            while(pVideoSample->lTimeStamp > pAudioSample->lTimeStamp){
+//                    if( send_Buffer[m_index+16]->Get( pAudioSample ) )
+//                    {
+//            //            printf("rtmp audio work.....................\n");
+//                        if( m_bRtmpEnable1 && m_pRtmpClient1 )
+//                        {
+//            //                printf("audio:  %lu\n", pAudioSample->lTimeStamp);
+
+////                            fwrite(pAudioSample->abySample,pAudioSample->lSampleLength,1,fprtmp_a);
+//            //                printf("rtmp  A length = %ld, timestamp = %ld \n", pAudioSample->lSampleLength, pAudioSample->lTimeStamp);
+//                            if( 0 == m_pRtmpClient1->Send( pAudioSample->abySample, (int)pAudioSample->lSampleLength, RTMP_PACKET_TYPE_AUDIO, (DWORD)pAudioSample->lTimeStamp ) )
+//                                Rtmp1SendError();
+//                        }
+//                    }
+//                }
+        }
         else
             usleep( 5000 );
     }
@@ -378,7 +416,7 @@ mfxStatus one_process::InitVideoDecoder( sInputParams *pParams )
 
     MSDK_ZERO_MEMORY( *pParams );
     InitVideoDecoderParam( pParams );
-    printf("init decoder\n");
+//    printf("init decoder\n");
     return m_pVideoDecoder->Init( pParams );
 }
 
@@ -476,6 +514,7 @@ void one_process::InitVideoEncoderParam( sParams *pParams )
     pParams->nGopOptFlag = m_EncoderParInfo.nGopOptFlag;
     pParams->nWidth = 720;
     pParams->nHeight = 576;
+//    pParams->nICQQuality = 36;
     GetQuality( pParams->nDstWidth, pParams->nDstHeight);
 //    pParams->nLADepth = m_EncoderParInfo.nLADepth;
     pParams->CodecId = MFX_CODEC_AVC;//GetCodecId();
@@ -566,9 +605,9 @@ bool one_process::InitRtmpClient1()
 //        SendLogToShow( RTMP1, true, QString("Rtmp1 url is empty! ") );
 //        return false;
 //    }
-    const char* addr = "1.8.84.12/live/livestream";
+    const char* addr = "1.8.23.98/live/stream90";
     m_pRtmpClient1->SetURL( addr );
-    m_pRtmpClient1->SetAudioDelay( 300 );
+//    m_pRtmpClient1->SetAudioDelay( 5000 );
 
     if( false == m_pRtmpClient1->Connect() )
     {
@@ -615,8 +654,8 @@ bool one_process::InitRtmpClient2()
 //        return false;
 //    }
 
-    m_pRtmpClient2->SetURL( "1.8.84.12/live/livestream1" );
-    m_pRtmpClient2->SetAudioDelay( 300 );
+    m_pRtmpClient2->SetURL( "1.8.23.98/live/stream91" );
+//    m_pRtmpClient2->SetAudioDelay( 1500 );
 
     if( false == m_pRtmpClient2->Connect() )
     {

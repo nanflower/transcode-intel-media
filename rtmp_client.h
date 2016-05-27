@@ -4,7 +4,7 @@
 #include <rtmp.h>
 #include "values.h"
 
-#define AUDIOPACKETARRAYSIZE  400
+#define AUDIOPACKETARRAYSIZE  10000
 
 enum
 {

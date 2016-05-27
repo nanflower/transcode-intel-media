@@ -343,6 +343,7 @@ int CRtmpClient::SendRTMPPacket(PBYTE pbuf, int nBufLen, int type, unsigned int 
 {
     if( NULL == m_pRtmp )
         return 0;
+    printf(" %d  timestamp = %u\n",type ,timestamp);
     RTMPPacket RtmpPacket;
     RTMPPacket_Reset( &RtmpPacket );
     RTMPPacket_Alloc( &RtmpPacket, nBufLen  );

@@ -1,15 +1,14 @@
 #ifndef AUDIO_ENCODE_H
 #define AUDIO_ENCODE_H
 
-
+#include "values.h"
 #include <faac.h>
 
 typedef struct tagSample
 {
-    unsigned long   lSampleLength;
-    unsigned long   lTimeStamp;
-    long   lDecodeTimeStamp;
-    unsigned char  abySample[1];
+    ULONG   lSampleLength;
+    ULONG   lTimeStamp;
+    BYTE  abySample[1];
 }SAMPLE, *PSAMPLE;
 //#include "loop_list_buffer.h"
 

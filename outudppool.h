@@ -27,9 +27,8 @@ const long NLOOPBUF_SIZE = 1024*1024;
 
 typedef struct tagSample
 {
-    unsigned long   lSampleLength;
-    unsigned long   lTimeStamp;
-    long   lDecodeTimeStamp;
+    ULONG   lSampleLength;
+    ULONG   lTimeStamp;
     BYTE  abySample[1];
 }SAMPLE, *PSAMPLE;
 
@@ -46,6 +45,7 @@ public:
 
 private:
 
+    int video;
     unsigned long m_tmpPcr;
     PBYTE m_pabyBuffer;
     volatile unsigned long m_lHead;
