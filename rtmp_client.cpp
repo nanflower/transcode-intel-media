@@ -341,9 +341,10 @@ void CRtmpClient::FillMetaData(NaluUnit &nalu)
 
 int CRtmpClient::SendRTMPPacket(PBYTE pbuf, int nBufLen, int type, unsigned int timestamp)
 {
+
     if( NULL == m_pRtmp )
         return 0;
-    printf(" %d  timestamp = %u\n",type ,timestamp);
+//    printf(" %d  timestamp = %u,%d\n",type ,timestamp,nBufLen);
     RTMPPacket RtmpPacket;
     RTMPPacket_Reset( &RtmpPacket );
     RTMPPacket_Alloc( &RtmpPacket, nBufLen  );

@@ -255,11 +255,13 @@ mfxStatus sTask::WriteBitstream()
 //    m_pSample->lDecodeTimeStamp = mfxBS.DecodeTimeStamp;
 
 //    printf("sending.......... length  = %d time = %ld\n",m_pSample->lSampleLength,m_pSample->lTimeStamp);
-    if(m_pSample->lSampleLength != 0)
+    if(m_pSample->lSampleLength != 0){
+//        printf("video timestamp = %lld\n",m_pSample->lTimeStamp);
         send_Buffer[deviceid]->Write(m_pSample );
+    }
 
 //    if(deviceid == 5)
-        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
+//        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v);
 //    else if(deviceid == 4)
 //        fwrite(m_pSample->abySample,m_pSample->lSampleLength,1,fpout_v1);
 //    else if(deviceid == 2)
@@ -1619,8 +1621,8 @@ mfxStatus CEncodingPipeline::Run()
         for (;;)
         {
             // at this point surface for encoder contains either a frame from file or a frame processed by vpp
-            sts = m_pMfxENC->EncodeFrameAsync(&m_EncodeCtrl, &m_pEncSurfaces[nEncSurfIdx], &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
-//            sts = m_pMfxENC->EncodeFrameAsync(NULL, &m_pEncSurfaces[nEncSurfIdx], &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
+//            sts = m_pMfxENC->EncodeFrameAsync(&m_EncodeCtrl, &m_pEncSurfaces[nEncSurfIdx], &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
+            sts = m_pMfxENC->EncodeFrameAsync(NULL, &m_pEncSurfaces[nEncSurfIdx], &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
             // get next surface and new task for 2nd bitstream in ViewOutput mode
             MSDK_IGNORE_MFX_STS(sts, MFX_ERR_MORE_BITSTREAM);
             break;
@@ -1703,8 +1705,8 @@ mfxStatus CEncodingPipeline::Run()
 
             for (;;)
             {
-                sts = m_pMfxENC->EncodeFrameAsync(&m_EncodeCtrl, &m_pEncSurfaces[nEncSurfIdx], &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
-//                sts = m_pMfxENC->EncodeFrameAsync(NULL, &m_pEncSurfaces[nEncSurfIdx], &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
+//                sts = m_pMfxENC->EncodeFrameAsync(&m_EncodeCtrl, &m_pEncSurfaces[nEncSurfIdx], &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
+                sts = m_pMfxENC->EncodeFrameAsync(NULL, &m_pEncSurfaces[nEncSurfIdx], &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
 
                 if (MFX_ERR_NONE < sts && !pCurrentTask->EncSyncP) // repeat the call if warning and no output
                 {
@@ -1760,8 +1762,8 @@ mfxStatus CEncodingPipeline::Run()
 
         for (;;)
         {
-            sts = m_pMfxENC->EncodeFrameAsync(&m_EncodeCtrl, NULL, &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
-//            sts = m_pMfxENC->EncodeFrameAsync(NULL, NULL, &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
+//            sts = m_pMfxENC->EncodeFrameAsync(&m_EncodeCtrl, NULL, &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
+            sts = m_pMfxENC->EncodeFrameAsync(NULL, NULL, &pCurrentTask->mfxBS, &pCurrentTask->EncSyncP);
 
             if (MFX_ERR_NONE < sts && !pCurrentTask->EncSyncP) // repeat the call if warning and no output
             {

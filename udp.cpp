@@ -4,7 +4,7 @@ FILE *m_write;
 FILE *m_write1;
 FILE *m_writeframe;
 
-#define ChannelNum 1
+#define ChannelNum 5
 #define MaxChannel 16
 #define FrameRate 25
 

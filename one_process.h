@@ -115,17 +115,10 @@ public:
     void RunSendRtmp();
 
     bool InitRtmpClient1();
-    bool InitRtmpClient2();
-    bool InitUdpRtpClient();
-    void SendLogToShow( SEND_CLIENT_INDEX sendClientIndex, bool bError, const QString strLogMsg );
 
     void CloseRtmp1();
-    void CloseRtmp2();
-    void CloseUdpRtp();
 
     void Rtmp1SendError();
-    void Rtmp2SendError();
-
 
 private:
 
@@ -138,10 +131,6 @@ private:
     uint                        m_nRtmpDisconnectTime1;
     bool                       m_bRtmpEnable1;
 
-    CRtmpClient*          m_pRtmpClient2;
-    QTimer                   m_ConnectRtmpTimer2;
-    uint                        m_nRtmpDisconnectTime2;
-    bool                       m_bRtmpEnable2;
 //    transcodepool *g_pCaptureDeviceVec[1];
 //    decodepool *g_decodeDevice[1];
     void InitEncoderPar();
@@ -179,12 +168,9 @@ private:
 private slots:
     void ConnectRtmp1();
     void ResponseConnectRtmpTimer1();
-    void ConnectRtmp2();
-    void ResponseConnectRtmpTimer2();
 
 signals:
     void ConnectRtmpTimer1();
-    void ConnectRtmpTimer2();
 };
 
 #endif // ONE_PROCESS_H

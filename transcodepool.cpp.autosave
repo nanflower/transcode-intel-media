@@ -32,7 +32,7 @@ bool transcodepool::GetFrame( uint8_t *YFrameBuf, int DataLength, unsigned long 
     int width = 720;
     int height = 576;
     DataLength = width * height * 3/2;
-
+//    printf("getframe encode \n");
 //    while(1){
 //        if( (ywrite_ptr == yread_ptr + DataLength) || (ywrite_ptr == DataLength&&yread_ptr == ybufsize) ){
 //            break;
@@ -66,9 +66,8 @@ bool transcodepool::PutFrame( AVFrame *pVideoframe )
 {
     if(TimeStamp == 0 )
         TimeStamp = pVideoframe->pts;
-
-
     pthread_mutex_lock(&lockerx);
+//    printf("video timestamp =\n");
 
     int j=0;
     if(ywrite_ptr + pVideoframe->width*pVideoframe->height*3/2 <= ybufsize){
@@ -110,7 +109,6 @@ bool transcodepool::PutFrame( AVFrame *pVideoframe )
 bool transcodepool::PutFrame( mfxFrameSurface1 *pSurface)
 {
     pthread_mutex_lock(&lockerx);
-//    printf("video pts = %lld\n",pSurface->Data.TimeStamp);
 
     mfxFrameInfo  &pInfo = pSurface->Info;
     mfxFrameData &pData = pSurface->Data;
